@@ -66,6 +66,11 @@ $(function() {
             html = div.firstChild.nodeValue;
             openFile(html, "application/octet-stream", false);
         });
+
+        $('#reset').on('click', function(){
+            localStorage.myClipboard='';
+            $('#editable').html('');
+        });
     }
     else {
         //user notification that html5 storage doesn't exist
