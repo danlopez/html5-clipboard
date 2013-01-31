@@ -63,20 +63,32 @@ body{
 
 p{
     font-family: Tahoma, Arial, Helvetica, sans-serif;
+    margin: 0;
 }
 
 h1 {
     font-family: Baskerville, Palatino, ‘Palatino Linotype’, Georgia, Serif;
+    margin: 0;
 }
 
 header{
-    height: 6.37em;
+}
+
+#top-content{
+    height: 6em;
     margin: 0 1em;
+    position: relative;
+}
+
+#controls{
+    margin: .25em 0;
+    position: absolute;
+    bottom: 0px;
 }
 
 #editable{
     position: absolute;
-    top: 6.37em;
+    top: 6em;
     bottom: 0;
     left: 0;
     right: 0;
