@@ -7,7 +7,6 @@ $(function() {
             return false;
         }
     }
-    
     /*Only run if html5 storage supported*/
     if(supports_html5_storage()){
 
@@ -44,6 +43,32 @@ $(function() {
                 }, minSaveTime);
             }
         });
+        function openFile (textToEncode, contentType, newWindow) {
+            var encodedText = window.btoa(textToEncode);
+            var dataURL = 'data:' + contentType + ';base64,' + encodedText;
+            if (newWindow) { // Not useful for application/octet-stream type
+                window.open(dataURL); // To open in a new tab/window
+            }
+            else {
+                window.location = dataURL; // To change the current page
+            }
+        }
+        $('#download').on('click', function(){
+            var html  = $("#editable").html();
+            //now remove all </div> and <br> tags
+            html=html.split('</div>').join('');
+            html=html.split('<br>').join('');
+            //add a new line for each div
+            html = html.split('<div>').join('\n');
+            //decode html again, in case you pasted that
+            var div = document.createElement('div');
+            div.innerHTML = html;
+            html = div.firstChild.nodeValue;
+            openFile(html, "application/octet-stream", false);
+        });
+    }
+    else {
+        //user notification that html5 storage doesn't exist
     }
 
 });
