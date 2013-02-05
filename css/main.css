@@ -102,3 +102,6 @@ header{
 #new_note {
     margin:0 0 10px 0;
 }
+#title {
+    background: #eee;
+}

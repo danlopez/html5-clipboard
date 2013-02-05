@@ -1,3 +1,4 @@
+
 $(function() {
 
     function supports_html5_storage() {
@@ -9,15 +10,23 @@ $(function() {
     }
     /*Only run if html5 storage supported*/
     if(supports_html5_storage()){
-        
+        /****** ADD OBJECT SUPPORT TO LOCALSTORAGE ********/
+    Storage.prototype.setObject = function(key, value) {
+        this.setItem(key, JSON.stringify(value));
+    }
+
+    Storage.prototype.getObject = function(key) {
+        var value = this.getItem(key);
+        return value && JSON.parse(value);
+    }
         /******** INITIALIZATION **********/
-        //initialize by creating a link for each note
-        var current_num=0;
+        //initialize by creating a drop down for each note
+        var current_num=1;
         for (var key in localStorage){
             if (key.indexOf('myClipboard') >=0){
-                addDropDown(key, localStorage.getItem(key).substring(0,localStorage.getItem(key).indexOf('--')));
+                addDropDown(key, localStorage.getObject(key)['title']);
                 //track highest (i.e. current) key
-                if (current_num <= parseInt(key.split('myClipboard'))[1])
+                if (current_num <= parseInt(key.split('myClipboard')[1]))
                     current_num = parseInt(key.split('myClipboard')[1])+1;
             }
         }
@@ -25,8 +34,6 @@ $(function() {
         //create new note & set current note to it
         var current_note = 'myClipboard'+current_num;
         createNote();
-        //load current note/ first note
-        $('#editable').html(localStorage.getItem(localStorage.getItem('currentNote'))).focus();
 
         /******* END INITIALIZATION *********/
 
@@ -37,17 +44,24 @@ $(function() {
         function createNote(){
             current_note='myClipboard'+current_num;
             //create new note
-            localStorage.setItem(current_note,'Note'+current_num+'--<div><br><br></div>');
+            note_obj = {note: '', title: 'Note '+current_num};
+
+            localStorage.setObject(current_note,note_obj);
             //insert note in drop down with Text / title of Note
-            addDropDown(current_note, 'Note'+current_num);
+            addDropDown(current_note, note_obj['title']);
             loadNote(current_note);
             current_num+=1;
+
+            // //load current note/ first note
+            // $('#editable').html(localStorage.getItem(localStorage.getItem('currentNote'))).focus();
+
         }
 
         function loadNote(note_id){
             current_note=note_id;
             localStorage.setItem('currentNote', current_note);
-            $('#editable').html(localStorage.getItem(note_id)).focus();
+            $('#editable').html(localStorage.getObject(note_id)['note']).focus();
+            $('#title').val(localStorage.getObject(note_id)['title']);
             $('#notes_tabs li.active').removeClass('active');
             $('#'+note_id).parent().addClass('active');
         }
@@ -66,7 +80,8 @@ $(function() {
             try {
                 /*Clean any empty tagss out of the clipboard before saving*/
                 $('#editable *:empty').not('br').remove();
-                localStorage.setItem(current_note, $('#editable').html());
+                note_obj = {note: $('#editable').html(), title: $('#title').val()};
+                localStorage.setObject(current_note, note_obj);
             } catch (e) {
                 alert("Current Save Operation failed.  Local storage capacity reached");
             }
@@ -74,7 +89,7 @@ $(function() {
         /***** SAVE HANDLER *******/
         var saveTimer;
         var minSaveTime = 500;
-        $('#editable').on('input', function() {
+        $('#editable, #title').on('input', function() {
             
             clearTimeout(saveTimer);
             saveTimer = setTimeout(function() {
@@ -122,13 +137,15 @@ $(function() {
         $('#new_note').on('click', function(){
             createNote();
         });
-        $('.switch_note').on('click', function(){
+        $(document).on('click', '.switch_note', function(){
             loadNote($(this).attr('id'));
         });
         $('#delete_note').on('click', function(){
             deleteNote(current_note);
         });
-
+        $('#title').on('input', function(){
+            $('#'+current_note).html('<i class="icon-book"></i> ' + $(this).val());
+        });
         /********* END Event Handlers *********/
 
     }
