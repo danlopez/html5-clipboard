@@ -17,7 +17,7 @@ $(function() {
             if (key.indexOf('myClipboard') >=0){
                 addDropDown(key, localStorage.getItem(key).substring(0,localStorage.getItem(key).indexOf('--')));
                 //track highest (i.e. current) key
-                if (current_num <= key.split('myClipboard')[1])
+                if (current_num <= parseInt(key.split('myClipboard'))[1])
                     current_num = parseInt(key.split('myClipboard')[1])+1;
             }
         }
@@ -63,7 +63,6 @@ $(function() {
         }
         function saveProgress() {
             $('#worksave').show().html(" Saving...").fadeOut('slow');
-            console.log(current_note);
             try {
                 /*Clean any empty tagss out of the clipboard before saving*/
                 $('#editable *:empty').not('br').remove();

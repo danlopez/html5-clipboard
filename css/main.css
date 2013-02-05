@@ -92,9 +92,12 @@ header{
     bottom: 0;
     left: 0;
     right: 0;
-    border-top: 1px solid #eee;
+    border: 1px solid #ddd;
     padding: 1em;
     margin-right: 10px;
+    min-height: 500px;
+    border-radius: 4px;
+    background: #EEE;
 }
 #new_note {
     margin:30px 0;
