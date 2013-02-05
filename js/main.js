@@ -45,7 +45,6 @@ $(function() {
             createNote();
         }
         loadNote(current_note);
-        //refreshNotesList();
 
 
 
@@ -69,14 +68,10 @@ $(function() {
         }
 
         $(window).on("storage", function(e){
-            //UpdateNoteList();
+            UpdateNoteList();
             
         })
 
-        function refreshNotesList(){
-            //UpdateNoteList();
-            setTimeout(function() { refreshNotesList() }, 5000); 
-        }
 
 
         function UpdateNoteList(){
