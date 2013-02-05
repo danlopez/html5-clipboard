@@ -54,7 +54,14 @@ $(function() {
             }
         }
         $('#download').on('click', function(){
+            
+            $("#editable *").each(function(){
+                $(this).removeAttr("style");
+            });
+
             var html  = $("#editable").html();
+            
+    
             //now remove all </div> and <br> tags
             html=html.split('</div>').join('');
             html=html.split('<br>').join('');
