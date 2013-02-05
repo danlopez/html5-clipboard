@@ -10,38 +10,51 @@ $(function() {
     }
     /*Only run if html5 storage supported*/
     if(supports_html5_storage()){
+        
         /****** ADD OBJECT SUPPORT TO LOCALSTORAGE ********/
-    Storage.prototype.setObject = function(key, value) {
-        this.setItem(key, JSON.stringify(value));
-    }
+        Storage.prototype.setObject = function(key, value) {
+            this.setItem(key, JSON.stringify(value));
+        }
 
-    Storage.prototype.getObject = function(key) {
-        var value = this.getItem(key);
-        return value && JSON.parse(value);
-    }
+        Storage.prototype.getObject = function(key) {
+            var value = this.getItem(key);
+            return value && JSON.parse(value);
+        }
+
         /******** INITIALIZATION **********/
         //initialize by creating a drop down for each note
-        var current_num=1;
-        for (var key in localStorage){
-            if (key.indexOf('myClipboard') >=0){
-                addDropDown(key, localStorage.getObject(key)['title']);
-                //track highest (i.e. current) key
-                if (current_num <= parseInt(key.split('myClipboard')[1]))
-                    current_num = parseInt(key.split('myClipboard')[1])+1;
+
+        var current_num=0;
+        var noteNum=0;
+        function loadNoteList(){
+            for (var key in localStorage){
+                if (key.indexOf('myClipboard') >=0){
+                    noteNum++;
+                    addDropDown(key, localStorage.getObject(key)['title']);
+                    //track highest (i.e. current) key
+                    if (current_num <= parseInt(key.split('myClipboard')[1])){
+                        current_num = parseInt(key.split('myClipboard')[1]);}
+                }
             }
         }
 
         //create new note & set current note to it
+        loadNoteList();
         var current_note = 'myClipboard'+current_num;
-        createNote();
+        if(noteNum<=0){
+            createNote();
+        }
+        loadNote(current_note);
+        //refreshNotesList();
+
+
 
         /******* END INITIALIZATION *********/
 
-        function addDropDown(id, title){
-            $('#notes_dropdown .divider').before('<li><a href="#" class="switch_note" id="' + id + '""><i class="icon-book"></i> ' + title + '</a></li>');
-            $('#notes_tabs').append('<li><a href="#" class="switch_note" id="' + id + '""><i class="icon-book"></i> ' + title + '</a></li>');
-        }
+
+
         function createNote(){
+            current_num++;
             current_note='myClipboard'+current_num;
             //create new note
             note_obj = {note: '', title: 'Note '+current_num};
@@ -50,21 +63,52 @@ $(function() {
             //insert note in drop down with Text / title of Note
             addDropDown(current_note, note_obj['title']);
             loadNote(current_note);
-            current_num+=1;
-
             // //load current note/ first note
             // $('#editable').html(localStorage.getItem(localStorage.getItem('currentNote'))).focus();
 
         }
 
+        $(window).on("storage", function(e){
+            //UpdateNoteList();
+            
+        })
+
+        function refreshNotesList(){
+            //UpdateNoteList();
+            setTimeout(function() { refreshNotesList() }, 5000); 
+        }
+
+
+        function UpdateNoteList(){
+            $('#notes_tabs').html('');
+            for (var key in localStorage){
+                if (key.indexOf('myClipboard') >=0){
+                     addDropDown(key, localStorage.getObject(key)['title']);
+                     //track highest (i.e. current) key
+                     if (current_num <= parseInt(key.split('myClipboard')[1]))
+                         current_num = parseInt(key.split('myClipboard')[1])+1;
+                }
+            }
+        }
+
+        function addDropDown(id, title){
+            $('#notes_tabs').append('<li><a href="#" class="switch_note" id="' + id + '"">' + title + '</a></li>');
+        }
+
+        function removeDropDown(id){
+
+        }
+
         function loadNote(note_id){
             current_note=note_id;
-            localStorage.setItem('currentNote', current_note);
+            // localStorage.setItem('currentNote', current_note);
             $('#editable').html(localStorage.getObject(note_id)['note']).focus();
             $('#title').val(localStorage.getObject(note_id)['title']);
             $('#notes_tabs li.active').removeClass('active');
             $('#'+note_id).parent().addClass('active');
         }
+
+
         function deleteNote(note_id){
             localStorage.removeItem(note_id);
             for (var key in localStorage){
@@ -72,11 +116,11 @@ $(function() {
                     loadNote(key)
                     break;
                 }
-            }
+            }            
             $('#'+note_id).parent().fadeOut();
         }
         function saveProgress() {
-            $('#worksave').show().html(" Saving...").fadeOut('slow');
+            $('#worksave').css('display', 'inline-block').fadeOut('slow');
             try {
                 /*Clean any empty tagss out of the clipboard before saving*/
                 $('#editable *:empty').not('br').remove();
@@ -144,7 +188,7 @@ $(function() {
             deleteNote(current_note);
         });
         $('#title').on('input', function(){
-            $('#'+current_note).html('<i class="icon-book"></i> ' + $(this).val());
+            $('#'+current_note).html($(this).val());
         });
         /********* END Event Handlers *********/
 

@@ -19,7 +19,7 @@
                     <div class="span10">
                         <h1>Welcome to notethis</h1>
                         <p>notethis is a free clipboard.  Just start typing.  It'll be here when you get back. 
-                            <span id="worksave"></span></p>
+                        <span id="worksave"></span></p>
                     </div>
                 </div>
             </div>
@@ -29,29 +29,29 @@
     <div class="container-fluid">
         <div class="row-fluid">
             <div class="span2">
+                <button class="btn btn-primary btn-large" id="new_note">New Note + </button>
                 <ul class="nav nav-tabs nav-stacked" id="notes_tabs">
-                    <li><a href="#" id="new_note">New Note + </a></li>
-                    <li class="divider"></li>
                 </ul>
+
             </div>
             <div class="span9">
-                    <ul class="nav nav-tabs">
-                        <li>                <input type="text" id ="title" maxlength='18'/>
-</li>
-                        <li><a href="#" id="download">Export</a></li>
-                        <li><a href="#" id="reset">Clear this note</a></li>
-                        <li class="dropdown">
-                            <a class="dropdown-toggle"
-                               data-toggle="dropdown"
-                               href="#">
+                <div class="controls form-inline">
+                    
+                        <input type="text" id="title" maxlength='18' title="Note Title"/>
+
+                        <button class="btn" id="download">Export</button>
+                        <button class="btn" id="reset">Clear this note</button>
+                        <div class="btn-group">
+                            <button class="btn dropdown-toggle" data-toggle="dropdown">
                                 Delete this note
                                 <b class="caret"></b>
-                              </a>
+                              </button>
                             <ul class="dropdown-menu">
                                 <li><a href="#" id="delete_note">Delete Forever</a></li>
                             </ul>
-                          </li>
-                    </ul>
+                        </div>
+                </div>
+
                 <div id="editable" contenteditable="true">
                 <!--Body content-->
                 </div>
