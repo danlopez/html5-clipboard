@@ -10,6 +10,19 @@ $(function() {
     }
     /*Only run if html5 storage supported*/
     if(supports_html5_storage()){
+
+        var myDataReference = new Firebase('https://definedclarity.firebaseio.com/');
+        var authClient = new FirebaseAuthClient(myDataReference, function(error, user) {
+          if (error) {
+            // an error occurred while attempting login
+            console.log(error);
+          } else if (user) {
+            // user authenticated with Firebase
+            console.log('User ID: ' + user.id + ', Provider: ' + user.provider);
+          } else {
+            // user is logged out
+          }
+        });
         
         /****** ADD OBJECT SUPPORT TO LOCALSTORAGE ********/
         Storage.prototype.setObject = function(key, value) {
@@ -170,14 +183,19 @@ $(function() {
         $('#new_note').on('click', function(){
             createNote();
         });
-        $(document).on('click', '.switch_note', function(){
+        $(document).on('click', '.switch_note', function(e){
+            e.preventDefault();
             loadNote($(this).attr('id'));
+
         });
         $('#delete_note').on('click', function(){
             deleteNote(current_note);
         });
         $('#title').on('input', function(){
             $('#'+current_note).html($(this).val());
+        });
+        $('#facebook_login').on('click', function(){
+            authClient.login('facebook');
         });
         /********* END Event Handlers *********/
 
