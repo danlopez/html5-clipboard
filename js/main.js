@@ -18,9 +18,31 @@ $(function() {
             console.log(error);
           } else if (user) {
             // user authenticated with Firebase
+            if(user.provider=='facebook'){
+                $("<span />", {
+                      class: "facebook login_name",
+                      html: "Welcome back, " + user.displayName // from an Ajax request or something
+                }).appendTo("#welcome");
+
+                 $('#logins').html(
+                    $("<button />", {
+                        class: "btn",
+                        id: "logout",
+                        html: "Logout"})
+                    
+                 );
+            }
             console.log('User ID: ' + user.id + ', Provider: ' + user.provider);
           } else {
-            // user is logged out
+
+            $('#logins').html(
+                $("<button />", {
+                    class: "btn",
+                    id: "facebook_login",
+                    html: "Facebook Login"
+                }))
+
+             // user is logged out
           }
         });
         
@@ -196,6 +218,11 @@ $(function() {
         });
         $('#facebook_login').on('click', function(){
             authClient.login('facebook');
+        });
+
+        $('#logins').on("click", '#logout', function(){
+            authClient.logout();
+            location.reload();
         });
         /********* END Event Handlers *********/
 
