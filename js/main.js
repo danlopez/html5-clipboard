@@ -45,6 +45,7 @@ $(function() {
             createNote();
         }
         loadNote(current_note);
+        //refreshNotesList();
 
 
 
@@ -72,16 +73,12 @@ $(function() {
             
         })
 
-
-
         function UpdateNoteList(){
             $('#notes_tabs').html('');
             for (var key in localStorage){
                 if (key.indexOf('myClipboard') >=0){
                      addDropDown(key, localStorage.getObject(key)['title']);
-                     //track highest (i.e. current) key
-                     if (current_num <= parseInt(key.split('myClipboard')[1]))
-                         current_num = parseInt(key.split('myClipboard')[1])+1;
+                     //track highest (i.e. current) key      
                 }
             }
         }
@@ -90,9 +87,6 @@ $(function() {
             $('#notes_tabs').append('<li><a href="#" class="switch_note" id="' + id + '"">' + title + '</a></li>');
         }
 
-        function removeDropDown(id){
-
-        }
 
         function loadNote(note_id){
             current_note=note_id;
