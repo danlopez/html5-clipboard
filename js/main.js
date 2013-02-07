@@ -33,10 +33,11 @@ $(function () {
         }
     }
 
-    function saveProgress(obj) {
+    function saveProgress() {
+
         var content, note_obj;
         try {
-            content = obj.getCode();
+            content = NoteThis.editor.getCode();
             /*Clean any empty tagss out of the clipboard before saving*/
             $('#editable *:empty').not('br').remove();
             note_obj = {note: content, title: $('#title').val()};
@@ -107,7 +108,7 @@ $(function () {
                 NoteThis.editor = obj;
             },
             keyupCallback: function(obj, event) {
-                saveProgress(NoteThis.editor);
+                saveProgress();
             }
         });
     }
@@ -259,7 +260,7 @@ $(function () {
          *  Save Handler
          *
          ****************/
-        $('#editable, #title').on('input', function () {
+        $('#title').on('input', function () {
             clearTimeout(NoteThis.saveTimer);
             NoteThis.saveTimer = setTimeout(function () {
                 saveProgress();
