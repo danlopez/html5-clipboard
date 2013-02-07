@@ -47,6 +47,7 @@ $(function () {
             }
         } catch (e) {
             alert("Current Save Operation failed.");
+            console.log(e);
         }
     }
 
