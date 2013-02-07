@@ -32,13 +32,15 @@ $(function () {
         }
     }
 
-    function saveProgress() {
+    function saveProgress(obj) {
+        var content, note_obj;
         try {
+            content = obj.getCode();
             /*Clean any empty tagss out of the clipboard before saving*/
             $('#editable *:empty').not('br').remove();
-            var note_obj = {note: $('#editable').html(), title: $('#title').val()};
+            note_obj = {note: content, title: $('#title').val()};
             localStorage.setObject("myClipboard" + NoteThis.noteIndex, note_obj);
-
+            console.log("Setting myClipboard" + NoteThis.noteIndex + " to " + note_obj);
             if (NoteThis.FireBaseUser) {
                 NoteThis.FireBaseUser.child("myClipboard" + NoteThis.noteIndex).update({title: $('#title').val(), content: $('#editable').html()});
             }
@@ -70,7 +72,25 @@ $(function () {
     }
 
     function loadNote(note_id) {
-        $('#editable').html(localStorage.getObject(note_id).note).focus();
+
+        var textarea = $('<textarea id="redactor">');
+
+        $('#redactorarea').html(textarea);
+        console.log(note_id);
+        var note = localStorage.getObject(note_id);
+        console.log(note);
+        $(textarea).redactor({
+            focus: true,
+            callback: function(obj)
+            {
+                obj.setCode(localStorage.getObject(note_id).note);
+            },
+            keyupCallback: function(obj, event) {
+                saveProgress(obj);
+            }
+        });
+
+        //$('#editable').html(localStorage.getObject(note_id).note).focus();
         $('#title').val(localStorage.getObject(note_id).title);
         $('#notes_tabs li.active').removeClass('active');
         $('#' + note_id).parent().addClass('active');
@@ -242,6 +262,8 @@ $(function () {
         });
 
 
+
+
         /******
          *  Event Handlers
          *
@@ -291,6 +313,8 @@ $(function () {
         });
 
         $('#facebook_login').tooltip();
+
+
 
     /***********************************************************************************************/
     } else {
