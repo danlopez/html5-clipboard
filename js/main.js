@@ -33,7 +33,6 @@ $(function () {
     }
 
     function saveProgress() {
-        $('#worksave').css('display', 'inline-block').fadeOut('slow');
         try {
             /*Clean any empty tagss out of the clipboard before saving*/
             $('#editable *:empty').not('br').remove();
