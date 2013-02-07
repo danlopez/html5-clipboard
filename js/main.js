@@ -109,11 +109,13 @@ $(function () {
         $('#logins').html(
             $("<button />", {
                 'class': "btn",
+                'data-placement': "bottom",
+                'rel': "tooltip",
+                'title': "Online tool sync still very much in beta.  Please do not login if you're afraid to lose notes!", 
                 'id': "facebook_login",
                 'html': "Facebook Login"
             })
         );
-
         initialize();
     }
 
@@ -287,6 +289,8 @@ $(function () {
             localStorage.setObject("myClipboard" + NoteThis.noteIndex, note_obj);
             $('#editable').html('');
         });
+
+        $('#facebook_login').tooltip();
 
     /***********************************************************************************************/
     } else {
