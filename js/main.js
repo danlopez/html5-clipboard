@@ -14,7 +14,8 @@ $(function () {
         minSaveTime:        500,      //Minimum Time between Saves
         FireBaseUser:       null,
         myDataReference:    null,
-        authClient:         null
+        authClient:         null,
+        editor:             null 
     };
 
     /******
@@ -73,22 +74,10 @@ $(function () {
 
     function loadNote(note_id) {
 
-        var textarea = $('<textarea id="redactor">');
-
-        $('#redactorarea').html(textarea);
         console.log(note_id);
         var note = localStorage.getObject(note_id);
         console.log(note);
-        $(textarea).redactor({
-            focus: true,
-            callback: function(obj)
-            {
-                obj.setCode(localStorage.getObject(note_id).note);
-            },
-            keyupCallback: function(obj, event) {
-                saveProgress(obj);
-            }
-        });
+        NoteThis.editor.setCode(localStorage.getObject(note_id).note);
 
         //$('#editable').html(localStorage.getObject(note_id).note).focus();
         $('#title').val(localStorage.getObject(note_id).title);
@@ -109,20 +98,35 @@ $(function () {
         loadNote(current_note);
     }
 
+    function createEditor(){
+        $('#redactor').redactor({
+            focus: true,
+            callback: function(obj)
+            {
+                NoteThis.editor = obj;
+            },
+            keyupCallback: function(obj, event) {
+                saveProgress(NoteThis.editor);
+            }
+        });
+    }
+
     function initialize() {
         //Initialize The Local Note List
+
         NoteThis.Incrementer = updateNoteList();
 
         if (NoteThis.noteIndex > NoteThis.Incrementer) {
             NoteThis.Incrementer = NoteThis.noteIndex;
         }
 
+        createEditor();
+
         if (NoteThis.Incrementer === 0) {
             createNote();
         } else {
             loadNote("myClipboard" + NoteThis.noteIndex);
         }
-
     }
 
     function loggedOutSetup() {
