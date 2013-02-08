@@ -280,7 +280,7 @@ $(function () {
     }
 
     function loggedOutSetup() {
-        $('#logins .dropdown-menu').append(
+        $('#logins .dropdown-menu').html('').append(
             $("<li />", {
                     'data-placement': "bottom",
                     'rel': "tooltip",
@@ -288,9 +288,7 @@ $(function () {
                     'id': "facebook_login",
                     'html': "<a>Facebook Login</a>"
                 })
-            )
-
-        $('#logins .dropdown-menu').append(
+            ).append(
                 $("<li />", {
                     'data-placement': "bottom",
                     'rel': "tooltip",
@@ -299,6 +297,9 @@ $(function () {
                     'html': "<a>Twitter Login</a>"
                 })
             )
+
+        $('#facebook_login, #twitter_login').tooltip();
+
 
         initialize();
         //clear local storage
@@ -311,7 +312,7 @@ $(function () {
         //     'html': "Welcome back, " + user.displayName // from an Ajax request or something
         // }).appendTo("#welcome");
         $('#logins .dropdown-toggle').html(user.displayName + '<b class="caret"></b>');
-        $('#logins .dropdown-menu').append(
+        $('#logins .dropdown-menu').html('').append(
             $("<li />", {
                 'id': "logout",
                 'html': "<a>Logout</a>"
@@ -325,6 +326,8 @@ $(function () {
                 'title': "Logout but keep local copies of all your notes", 
             })
         );
+        $('#logout_keep_data').tooltip();
+
     }
 
     function export_note() {
@@ -498,11 +501,6 @@ $(function () {
             export_note();
         });
 
-        // $('#reset').on('click', function () {
-        //     clearNote();
-        // });
-
-        $('#facebook_login, #twitter_login').tooltip();
 
 
 
