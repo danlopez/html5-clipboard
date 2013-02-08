@@ -50,6 +50,10 @@ body{
     background-repeat: no-repeat;
 }
 
+.switch_note.cloud:before{
+    background-position: -337px -144px;
+}
+
 .controls button{
 	margin-bottom: 10px;
 }

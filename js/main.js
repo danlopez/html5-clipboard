@@ -1,5 +1,7 @@
 /*global $, jQuery, window, Storage, localStorage, alert, document, openFile, Firebase, FirebaseAuthClient, clearTimeout, setTimeout, location */
 
+console.log("Running");
+
 $(function () {
     'use strict';
 
@@ -8,9 +10,9 @@ $(function () {
      *  In lieu of global variables
      ****************/
     var NoteThis = {
-        activeNote :        null,       //Current Note Index
-        saveTimer:          null,    //SaveTimer Object
-        minSaveTime:        500,      //Minimum Time between Saves
+        activeNote :        null,     //Current Note Index
+        saveTimer:          null,     //SaveTimer Object
+        minSaveTime:        150,      //Minimum Time between Saves
         FireBaseUser:       null,
         myDataReference:    null,
         authClient:         null,
@@ -33,6 +35,15 @@ $(function () {
         }
     }
 
+    function getObjectLength (obj){
+        var size = 0;
+        for (var prop in obj) {
+            if (hasOwnProperty.call(obj, prop)) size = size + 1;
+          }
+          console.log("Size0>" + size);
+          return size;
+    }
+
     function setLocalObject(key, value){
         localStorage.setItem(key, JSON.stringify(value));
     }
@@ -43,30 +54,78 @@ $(function () {
     }
 
     function saveProgress() {
-
-        //Save Occassionally gets fired when no note is active.  Safely ignore
-        if(NoteThis.activeNote !== null){
-
-            var content, note_obj;
-            try {
-                content = NoteThis.editor.getCode();
-                /*Clean any empty tagss out of the clipboard before saving*/
-                $('#editable *:empty').not('br').remove();
-                note_obj = {note: content, title: $('#title').val()};
-                setLocalObject(NoteThis.activeNote, note_obj);
-                if (NoteThis.FireBaseUser) {
-                    NoteThis.FireBaseUser.child(NoteThis.activeNote).update({title: $('#title').val(), content: $('#editable').html()});
-                }
-
-
-            } catch (e) {
-                alert("Current Save Operation failed.");
-            }
-        }
+        clearTimeout(NoteThis.saveTimer);
+        NoteThis.saveTimer = setTimeout(function () {
+            delayedSave();
+        }, NoteThis.minSaveTime);
     }
 
-    function addDropDown(id, title) {
-        $('#notes_tabs').append('<li><a href="#" class="switch_note" id="' + id + '"">' + title + '</a></li>');
+    function delayedSave() {
+        var content, note_obj;
+
+        //Save Occassionally gets fired when no note is active.  Safely ignore
+        if(NoteThis.activeNote === null){
+            return;
+        }
+        
+        try {
+            content = NoteThis.editor.getCode();
+            note_obj = {note: content, title: $('#title').val()};
+            //setLocalObject(NoteThis.activeNote, note_obj);
+            if (NoteThis.FireBaseUser) {
+                console.log("In!");
+                if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
+                    pushNewNote(note_obj);
+                } else {   
+                    console.log("Active note not part of my clipboard!" + NoteThis.activeNote);
+                    NoteThis.FireBaseUser.child(NoteThis.activeNote).update(note_obj);
+                    setLocalObject(NoteThis.activeNote, note_obj);
+                }
+            } else {
+                if(NoteThis.activeNote.indexOf('fireClip-') >= 0){
+
+                    pushNoteLocal(note_obj);
+                    setLocalObject(NoteThis.activeNote, note_obj); //REMOVE THIS ONCE pushNOTE LOCAL IS WRITTEN
+                } else {
+                    setLocalObject(NoteThis.activeNote, note_obj);
+                }                 
+            }
+        } catch (e) {
+            console.log(e);
+            alert("Current Save Operation failed.");
+        }
+        
+    }
+
+    /* Take a previously online note, and convert it back to a local note */
+    function pushNoteLocal(note_object) {
+        //TO DO
+        console.log("Unwritten function!");
+    }
+
+    /* Generate a NEW Server-Side Note Object*/
+    function pushNewNote(note_object) {
+        var newNote, newNoteNum;
+        if(!NoteThis.userData){
+            newNote = "fireClip-1"; // No notes found
+        } else {
+            newNoteNum = getObjectLength(NoteThis.userData) + 1
+            newNote = "fireClip-" + newNoteNum; // Name is 1 more than the rest of the notes
+            console.log(newNote);
+            console.log(NoteThis.userData);
+        }
+
+        NoteThis.FireBaseUser.child(newNote).update(note_object); 
+        setLocalObject(newNote, note_object);
+        localStorage.removeItem(NoteThis.activeNote);    
+        $('#' + NoteThis.activeNote).attr('id', newNote).addClass("cloud");
+        NoteThis.activeNote = newNote;        
+    }
+
+    function addDropDown(id, title, myClass) {
+        var thisClass = myClass || '';
+        thisClass = thisClass + " switch_note";
+        $('#notes_tabs').append('<li><a href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
     }
 
     function updateNoteList() {
@@ -76,8 +135,12 @@ $(function () {
         for (var key in localStorage){
 
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
-                if (key.indexOf('myClipboard') >= 0) {
+                if (key.indexOf('myClipboard-') >= 0) {
                     addDropDown(key, getLocalObject(key).title);
+                    exists = key;
+                }
+                if (key.indexOf('fireClip-') >= 0) {
+                    addDropDown(key, getLocalObject(key).title, 'cloud');
                     exists = key;
                 }
             }
@@ -85,6 +148,9 @@ $(function () {
         return exists;
     }
 
+    /*  
+    **  Switches Active Note, Loads WYSIWYG from LocalStorage                  
+    */
     function loadNote(note_id) {
         var note = getLocalObject(note_id);
         NoteThis.editor.setCode(getLocalObject(note_id).note);
@@ -97,23 +163,28 @@ $(function () {
         localStorage.setItem('activeNote', note_id);
     }
 
-    //Set NoteThis.Incrementer and identify next available local note name
+    /*  
+    **  Identify next available local note name                                                   
+    */   
     function getNextNote() {
         var num = 0, nextNote;
         do{
             num = num + 1;
-            nextNote = "myClipboard" + num;
+            nextNote = "myClipboard-" + num;
             
         }   while(nextNote in localStorage);
         return nextNote;
     }
 
+    /*
+    **  Generates a local note and makes it active
+    */
     function createNote() {
         var current_note, note_obj;
         current_note = getNextNote();
         //create new note
 
-        note_obj = {note: '', title: 'Note ' + current_note.split('myClipboard')[1]};
+        note_obj = {note: '', title: 'Note ' + current_note.split('myClipboard-')[1]};
         setLocalObject(current_note, note_obj);
         //insert note in drop down with Text / title of Note
         addDropDown(current_note, note_obj.title);
@@ -145,7 +216,7 @@ $(function () {
 
     function initialize() {
         var exists;
-        
+
         //Load the NoteList, if any notes exist
         exists = updateNoteList();
 
@@ -180,10 +251,10 @@ $(function () {
     }
 
     function loggedInSetup(user) {
-        $("<span />", {
-            'class': "facebook login_name",
-            'html': "Welcome back, " + user.displayName // from an Ajax request or something
-        }).appendTo("#welcome");
+        // $("<span />", {
+        //     'class': "facebook login_name",
+        //     'html': "Welcome back, " + user.displayName // from an Ajax request or something
+        // }).appendTo("#welcome");
 
         $('#logins').html(
             $("<button />", {
@@ -233,7 +304,7 @@ $(function () {
 
         for (var key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
-                if (key.indexOf('myClipboard') >= 0) {
+                if (key.indexOf('myClipboard-') >= 0 || key.indexOf('fireClip-') >= 0) {
                     loadNote(key);
                     break;
                 }
@@ -242,37 +313,32 @@ $(function () {
         $('#' + note_id).parent().fadeOut();
     }
 
-    // Not currently used.  Found that if things weren't saving immediately, it was possible to lose data.  Lost data = horrible!
-    // function saveDelay(){
-    //     clearTimeout(NoteThis.saveTimer);
-    //     NoteThis.saveTimer = setTimeout(function () {
-    //         saveProgress();
-    //     }, NoteThis.minSaveTime);
-    // }
-
     /******
      * FireBase Handler
      *
      ****************/
 
     function setupFireBaseHandlers(user_id) {
+        console.log("Setting up Firebase handlers");
         var key, note_obj;
         NoteThis.FireBaseUser = new Firebase('https://definedclarity.firebaseio.com/users/' + user_id);
         NoteThis.FireBaseUser.once('value', function (snapshot) {
             if (snapshot.val() !== null) {
                 for (key in snapshot.val()) {
                     if (snapshot.val().hasOwnProperty(key)) {
-                        note_obj = {note: snapshot.val()[key].content, title: snapshot.val()[key].title};
+                        note_obj = {note: snapshot.val()[key].note, title: snapshot.val()[key].title};
                         setLocalObject(key, note_obj)
                     }
-                }
-                initialize();
+                }   
             }
         });
+
+        initialize();
 
         NoteThis.FireBaseUser.on('value', function (snapshot) {
             if(snapshot.val() !== null) {
                 NoteThis.userData = snapshot.val();
+                console.log("OMG FIREBASE EVENT TRIGGARED");
             }
         });
     }
@@ -349,7 +415,7 @@ $(function () {
         });
 
         $('#title').on('input', function () {
-            $('#myClipboard' + NoteThis.activeNote).html($(this).val());
+            $('#' + NoteThis.activeNote).html($(this).val());
         });
 
         $('#download').on('click', function () {
