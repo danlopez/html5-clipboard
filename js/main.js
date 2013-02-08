@@ -242,19 +242,19 @@ $(function () {
         });
     }
 
-    //Lets wysiwyg editor track with the user when content is long
+    //Lets wysiwyg toolbar scroll with the user
     function attachScrollObserver(){
-        var height = $('#edit_wrapper').offset().top;
-        var $window = $(window);
- 
+        var height, $window = $(window);
+
          $window.scroll(function(e) {
+            height = $('#edit_wrapper').offset().top;
              if($window.scrollTop() > height){
                  $("#toolbar, .redactor_box").addClass('scrollfix');   
              } else {
-
                  $("#toolbar, .redactor_box").removeClass('scrollfix');
              }
         });
+
     }
 
     function initialize() {
