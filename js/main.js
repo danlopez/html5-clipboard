@@ -138,8 +138,7 @@ $(function () {
                     addDropDown(key, getLocalObject(key).title);
                     exists = key;
                 } else if (key.indexOf('myClipboard') >= 0) {     
-                    temp = migrateNote(key, key.substring(0, 11), key.substring(12));
-                    addDropDown(key, getLocalObject(key).title);
+                    temp = migrateNote(key);
                     exists = key; 
                 }
                 if (key.indexOf('fireClip-') >= 0) {
@@ -155,14 +154,17 @@ $(function () {
         var obj, note_obj, next_note;
         console.log("Migrating note");
         if(key !== undefined){
-            obj = getLocalObject(key);
-            note_obj = {note: obj.note, title:  obj.title};
+            if(key === "myClipboard"){ //old style, single note.  Not an object.
+                note_obj = {note: localStorage.myClipboard, title: "Note 0"}
+            } else {
+                obj = getLocalObject(key);
+                note_obj = {note: obj.note, title:  obj.title};
+            }
             next_note = getNextNote();
             setLocalObject(next_note, note_obj);
+            addDropDown(next_note, note_obj.title);
             deleteNote(key);
-
-        }
-        
+        }  
     }
 
     /*  
