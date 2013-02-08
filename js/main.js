@@ -279,16 +279,26 @@ $(function () {
     }
 
     function loggedOutSetup() {
-        $('#logins').html(
-            $("<button />", {
-                'class': "btn",
-                'data-placement': "bottom",
-                'rel': "tooltip",
-                'title': "Online tool sync still very much in beta.  Please do not login if you're afraid to lose notes!", 
-                'id': "facebook_login",
-                'html': "Facebook Login"
-            })
-        );
+        $('#logins .dropdown-menu').append(
+            $("<li />", {
+                    'data-placement': "bottom",
+                    'rel': "tooltip",
+                    'title': "Online tool sync still very much in beta.  Please do not login if you're afraid to lose notes!", 
+                    'id': "facebook_login",
+                    'html': "<a>Facebook Login</a>"
+                })
+            )
+
+        $('#logins .dropdown-menu').append(
+                $("<li />", {
+                    'data-placement': "bottom",
+                    'rel': "tooltip",
+                    'title': "Online tool sync still very much in beta.  Please do not login if you're afraid to lose notes!", 
+                    'id': "twitter_login",
+                    'html': "<a>Twitter Login</a>"
+                })
+            )
+
         initialize();
         //clear local storage
 
@@ -299,12 +309,19 @@ $(function () {
         //     'class': "facebook login_name",
         //     'html': "Welcome back, " + user.displayName // from an Ajax request or something
         // }).appendTo("#welcome");
-
-        $('#logins').html(
-            $("<button />", {
-                'class': "btn",
+        $('#logins .dropdown-toggle').html(user.displayName + '<b class="caret"></b>');
+        $('#logins .dropdown-menu').append(
+            $("<li />", {
                 'id': "logout",
-                'html': "Logout"
+                'html': "<a>Logout</a>"
+            })
+        ).append(
+            $("<li />", {
+                'id': "logout_keep_data",
+                'html': "<a>Logout and keep data</a>",
+                'data-placement': "bottom",
+                'rel': "tooltip",
+                'title': "Logout but keep local copies of all your notes", 
             })
         );
     }
@@ -429,15 +446,24 @@ $(function () {
          *
          ****************/
 
-        $('#logins').on('click', '#facebook_login', function () {
+        $('#logins').on('click', '#facebook_login', function (e) {
             NoteThis.authClient.login('facebook');
+            e.preventDefault();
         });
-
+        $('#logins').on('click', '#twitter_login', function (e) {
+            NoteThis.authClient.login('twitter');
+            e.preventDefault();
+        });
         $('#logins').on("click", '#logout', function () {
             NoteThis.authClient.logout();
+            localStorage.clear()
             location.reload(); //Force a Reload to reapply loggedin/loggedout setup
         });
 
+        $('#logins').on("click", '#logout_keep_data', function () {
+            NoteThis.authClient.logout();
+            location.reload(); //Force a Reload to reapply loggedin/loggedout setup
+        });
         /*Triggers an update on other tabs when noteme is open in multiple windows*/
         $(window).on("storage", function () {
             updateNoteList();
@@ -470,7 +496,7 @@ $(function () {
         //     clearNote();
         // });
 
-        $('#facebook_login').tooltip();
+        $('#facebook_login, #twitter_login').tooltip();
 
 
 
