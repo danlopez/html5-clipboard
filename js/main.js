@@ -157,8 +157,13 @@ $(function () {
             if(key === "myClipboard"){ //old style, single note.  Not an object.
                 note_obj = {note: localStorage.myClipboard, title: "Note 0"}
             } else {
-                obj = getLocalObject(key);
-                note_obj = {note: obj.note, title:  obj.title};
+                try{
+                    obj = getLocalObject(key);
+                    note_obj = {note: obj.note, title:  obj.title};
+                }
+                catch(e){//If all else fails, grab the item directly (do not parse), dump the contents in a note
+                    note_obj = {note: localStorage.getItem(key), title: "untitled"}
+                }          
             }
             next_note = getNextNote();
             setLocalObject(next_note, note_obj);
