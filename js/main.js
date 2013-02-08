@@ -242,29 +242,19 @@ $(function () {
         });
     }
 
+    //Lets wysiwyg editor track with the user when content is long
     function attachScrollObserver(){
-
         var height = $('#edit_wrapper').offset().top;
-        console.log(height);
-
-
         var $window = $(window);
-        // var height = $('.featured').height();
-        // var qheight = $('.site_header').height() + $('.quick_links').height()
-
+ 
          $window.scroll(function(e) {
-            console.log($window.scrollTop());
-
              if($window.scrollTop() > height){
-                console.log("Here!");
                  $("#toolbar, .redactor_box").addClass('scrollfix');   
-
              } else {
-                console.log("Window - " + $window.scrollTop() + " height " + height );
+
                  $("#toolbar, .redactor_box").removeClass('scrollfix');
              }
         });
-
     }
 
     function initialize() {
