@@ -8,14 +8,14 @@ $(function () {
      *  In lieu of global variables
      ****************/
     var NoteThis = {
-        noteIndex :         0,       //Current Note Index
-        Incrementer:        0,       //Number Only Ever Goes Up.  Used for note naming
+        activeNote :        null,       //Current Note Index
         saveTimer:          null,    //SaveTimer Object
         minSaveTime:        500,      //Minimum Time between Saves
         FireBaseUser:       null,
         myDataReference:    null,
         authClient:         null,
-        editor:             null 
+        editor:             null,
+        userData:           null, 
     };
 
     /******
@@ -33,22 +33,35 @@ $(function () {
         }
     }
 
+    function setLocalObject(key, value){
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function getLocalObject(key){
+        var value = localStorage.getItem(key);
+        return value && JSON.parse(value);
+    }
+
     function saveProgress() {
 
-        var content, note_obj;
-        try {
-            content = NoteThis.editor.getCode();
-            /*Clean any empty tagss out of the clipboard before saving*/
-            $('#editable *:empty').not('br').remove();
-            note_obj = {note: content, title: $('#title').val()};
-            localStorage.setObject("myClipboard" + NoteThis.noteIndex, note_obj);
-            console.log("Setting myClipboard" + NoteThis.noteIndex + " to " + note_obj);
-            if (NoteThis.FireBaseUser) {
-                NoteThis.FireBaseUser.child("myClipboard" + NoteThis.noteIndex).update({title: $('#title').val(), content: $('#editable').html()});
+        //Save Occassionally gets fired when no note is active.  Safely ignore
+        if(NoteThis.activeNote !== null){
+
+            var content, note_obj;
+            try {
+                content = NoteThis.editor.getCode();
+                /*Clean any empty tagss out of the clipboard before saving*/
+                $('#editable *:empty').not('br').remove();
+                note_obj = {note: content, title: $('#title').val()};
+                setLocalObject(NoteThis.activeNote, note_obj);
+                if (NoteThis.FireBaseUser) {
+                    NoteThis.FireBaseUser.child(NoteThis.activeNote).update({title: $('#title').val(), content: $('#editable').html()});
+                }
+
+
+            } catch (e) {
+                alert("Current Save Operation failed.");
             }
-        } catch (e) {
-            alert("Current Save Operation failed.");
-            console.log(e);
         }
     }
 
@@ -57,52 +70,69 @@ $(function () {
     }
 
     function updateNoteList() {
-        var num = 0, i, key, localStorageKeys = Object.keys(localStorage);
+        var exists = false, i, current = 0, key;
 
         $('#notes_tabs').html('');
+        for (var key in localStorage){
 
-        for (i = 0; i < localStorageKeys.length; i = i + 1) {
-            key = localStorageKeys[i];
-            if (key.indexOf('myClipboard') >= 0) {
-                num = num + 1;
-                addDropDown(key, localStorage.getObject(key).title);
-                if (NoteThis.noteIndex <= parseInt(key.split('myClipboard')[1], 10)) {
-                    NoteThis.noteIndex = parseInt(key.split('myClipboard')[1], 10);
+            if(Object.prototype.hasOwnProperty.call(localStorage,key)){
+                if (key.indexOf('myClipboard') >= 0) {
+                    addDropDown(key, getLocalObject(key).title);
+                    exists = key;
                 }
             }
         }
-        return num;
+        return exists;
     }
 
     function loadNote(note_id) {
-
-        console.log(note_id);
-        var note = localStorage.getObject(note_id);
-        console.log(note);
-        NoteThis.editor.setCode(localStorage.getObject(note_id).note);
-
+        var note = getLocalObject(note_id);
+        NoteThis.editor.setCode(getLocalObject(note_id).note);
         //$('#editable').html(localStorage.getObject(note_id).note).focus();
-        $('#title').val(localStorage.getObject(note_id).title);
+        $('#title').val(getLocalObject(note_id).title);
         $('#notes_tabs li.active').removeClass('active');
         $('#' + note_id).parent().addClass('active');
-        NoteThis.noteIndex = parseInt(note_id.split('myClipboard')[1], 10);
+
+        NoteThis.activeNote = note_id;
+        localStorage.setItem('activeNote', note_id);
+    }
+
+    //Set NoteThis.Incrementer and identify next available local note name
+    function getNextNote() {
+        var num = 0, nextNote;
+        do{
+            num = num + 1;
+            nextNote = "myClipboard" + num;
+            
+        }   while(nextNote in localStorage);
+        return nextNote;
     }
 
     function createNote() {
         var current_note, note_obj;
-        NoteThis.Incrementer = NoteThis.Incrementer + 1;
-        current_note = 'myClipboard' + NoteThis.Incrementer;
+        current_note = getNextNote();
         //create new note
-        note_obj = {note: '', title: 'Note ' + NoteThis.Incrementer};
-        localStorage.setObject(current_note, note_obj);
+
+        note_obj = {note: '', title: 'Note ' + current_note.split('myClipboard')[1]};
+        setLocalObject(current_note, note_obj);
         //insert note in drop down with Text / title of Note
         addDropDown(current_note, note_obj.title);
         loadNote(current_note);
     }
 
+    function noteExists(note_id) {
+        return (note_id in localStorage);
+    }
+
     function createEditor(){
+        var buttons = ['html', '|', 'formatting', '|', 'bold', 'italic', 'deleted', '|', 
+                        'unorderedlist', 'orderedlist', 'outdent', 'indent', '|',
+                        'image', 'video', 'file', 'table', 'link', '|',
+                        'fontcolor', 'backcolor', '|', 'alignment'];
+
         $('#redactor').redactor({
             focus: true,
+            buttons: buttons,
             callback: function(obj)
             {
                 NoteThis.editor = obj;
@@ -114,20 +144,24 @@ $(function () {
     }
 
     function initialize() {
-        //Initialize The Local Note List
+        var exists;
+        
+        //Load the NoteList, if any notes exist
+        exists = updateNoteList();
 
-        NoteThis.Incrementer = updateNoteList();
-
-        if (NoteThis.noteIndex > NoteThis.Incrementer) {
-            NoteThis.Incrementer = NoteThis.noteIndex;
-        }
-
+        //Load the exitor
         createEditor();
 
-        if (NoteThis.Incrementer === 0) {
+        //If no note exists, create one.  Otherwise, check to see if we have an active note, and load it.  Otherwise, just load an existing note.
+        if (!exists) {
             createNote();
         } else {
-            loadNote("myClipboard" + NoteThis.noteIndex);
+            NoteThis.activeNote = localStorage.getItem('activeNote');
+            if (NoteThis.activeNote !== null && noteExists(NoteThis.activeNote)) {
+                loadNote(NoteThis.activeNote);
+            } else {
+                loadNote(exists);
+            }
         }
     }
 
@@ -193,19 +227,28 @@ $(function () {
     }
 
     function deleteNote(note_id) {
-        var i, key, localStorageKeys;
+        var i, key;
 
         localStorage.removeItem(note_id);
-        localStorageKeys = Object.keys(localStorage);
-        for (i = 0; i < localStorageKeys.length; i = i + 1) {
-            key = localStorageKeys[i];
-            if (key.indexOf('myClipboard') >= 0) {
-                loadNote(key);
-                break;
+
+        for (var key in localStorage){
+            if(Object.prototype.hasOwnProperty.call(localStorage,key)){
+                if (key.indexOf('myClipboard') >= 0) {
+                    loadNote(key);
+                    break;
+                }
             }
         }
         $('#' + note_id).parent().fadeOut();
     }
+
+    // Not currently used.  Found that if things weren't saving immediately, it was possible to lose data.  Lost data = horrible!
+    // function saveDelay(){
+    //     clearTimeout(NoteThis.saveTimer);
+    //     NoteThis.saveTimer = setTimeout(function () {
+    //         saveProgress();
+    //     }, NoteThis.minSaveTime);
+    // }
 
     /******
      * FireBase Handler
@@ -220,10 +263,16 @@ $(function () {
                 for (key in snapshot.val()) {
                     if (snapshot.val().hasOwnProperty(key)) {
                         note_obj = {note: snapshot.val()[key].content, title: snapshot.val()[key].title};
-                        localStorage.setObject(key, note_obj);
+                        setLocalObject(key, note_obj)
                     }
                 }
                 initialize();
+            }
+        });
+
+        NoteThis.FireBaseUser.on('value', function (snapshot) {
+            if(snapshot.val() !== null) {
+                NoteThis.userData = snapshot.val();
             }
         });
     }
@@ -232,6 +281,7 @@ $(function () {
     if (supports_html5_storage()) {
 
         /****** ADD OBJECT SUPPORT TO LOCALSTORAGE ********/
+        //NOT SUPPORTED IN IE8
         Storage.prototype.setObject = function (key, value) {
             this.setItem(key, JSON.stringify(value));
         };
@@ -261,14 +311,8 @@ $(function () {
          *
          ****************/
         $('#title').on('input', function () {
-            clearTimeout(NoteThis.saveTimer);
-            NoteThis.saveTimer = setTimeout(function () {
-                saveProgress();
-            }, NoteThis.minSaveTime);
+            saveProgress();
         });
-
-
-
 
         /******
          *  Event Handlers
@@ -301,22 +345,20 @@ $(function () {
 
         $('#delete_note').on('click', function (e) {
             e.preventDefault();
-            deleteNote("myClipboard" + NoteThis.noteIndex);
+            deleteNote(NoteThis.activeNote);
         });
 
         $('#title').on('input', function () {
-            $('#myClipboard' + NoteThis.noteIndex).html($(this).val());
+            $('#myClipboard' + NoteThis.activeNote).html($(this).val());
         });
 
         $('#download').on('click', function () {
             export_note();
         });
 
-        $('#reset').on('click', function () {
-            var note_obj = {note: '', title: $('#title').val()};
-            localStorage.setObject("myClipboard" + NoteThis.noteIndex, note_obj);
-            $('#editable').html('');
-        });
+        // $('#reset').on('click', function () {
+        //     clearNote();
+        // });
 
         $('#facebook_login').tooltip();
 

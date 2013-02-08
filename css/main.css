@@ -61,3 +61,7 @@ body{
 .navbar-static-top{
     margin-bottom: 10px;
 }
+
+.redactor_editor{
+    min-height:200px;
+}
