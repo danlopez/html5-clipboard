@@ -135,14 +135,16 @@ $(function () {
         for (var key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('myClipboard-') >= 0) {
-                    addDropDown(key, getLocalObject(key).title);
+                    temp = getLocalObject(key).title || "untitled";
+                    addDropDown(key, temp);
                     exists = key;
                 } else if (key.indexOf('myClipboard') >= 0) {     
                     temp = migrateNote(key);
                     exists = key; 
                 }
                 if (key.indexOf('fireClip-') >= 0) {
-                    addDropDown(key, getLocalObject(key).title, 'cloud');
+                    temp = getLocalObject(key).title || "untitled";
+                    addDropDown(key, temp, 'cloud');
                     exists = key;
                 }
             }
@@ -154,16 +156,12 @@ $(function () {
         var obj, note_obj, next_note;
         console.log("Migrating note");
         if(key !== undefined){
-            if(key === "myClipboard"){ //old style, single note.  Not an object.
-                note_obj = {note: localStorage.myClipboard, title: "Note 0"}
-            } else {
-                try{
-                    obj = getLocalObject(key);
-                    note_obj = {note: obj.note, title:  obj.title};
-                }
-                catch(e){//If all else fails, grab the item directly (do not parse), dump the contents in a note
-                    note_obj = {note: localStorage.getItem(key), title: "untitled"}
-                }          
+            try{
+                obj = getLocalObject(key);
+                note_obj = {note: obj.note, title:  obj.title};
+            }
+            catch(e){//If all else fails, grab the item directly (do not parse), dump the contents in a note
+                note_obj = {note: localStorage.getItem(key), title: "untitled"}
             }
             next_note = getNextNote();
             setLocalObject(next_note, note_obj);
@@ -176,10 +174,13 @@ $(function () {
     **  Switches Active Note, Loads WYSIWYG from LocalStorage                  
     */
     function loadNote(note_id) {
+
         var thisNote = getLocalObject(note_id);
-        console.log("Note ID" + note_id);
-        console.log(thisNote);
-        NoteThis.editor.setCode(thisNote.note);
+        
+        thisNote.note = thisNote.note || "";
+        thisNote.title = thisNote.title || "untitled";
+            NoteThis.editor.setCode(thisNote.note);
+
         //$('#editable').html(localStorage.getObject(note_id).note).focus();
         $('#title').val(thisNote.title);
         $('#notes_tabs li.active').removeClass('active');
