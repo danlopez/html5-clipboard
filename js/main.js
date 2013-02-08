@@ -129,15 +129,18 @@ $(function () {
     }
 
     function updateNoteList() {
-        var exists = false, i, current = 0, key;
+        var exists = false, i, temp, key;
 
         $('#notes_tabs').html('');
         for (var key in localStorage){
-
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('myClipboard-') >= 0) {
                     addDropDown(key, getLocalObject(key).title);
                     exists = key;
+                } else if (key.indexOf('myClipboard') >= 0) {     
+                    temp = migrateNote(key, key.substring(0, 11), key.substring(12));
+                    addDropDown(key, getLocalObject(key).title);
+                    exists = key; 
                 }
                 if (key.indexOf('fireClip-') >= 0) {
                     addDropDown(key, getLocalObject(key).title, 'cloud');
@@ -148,14 +151,30 @@ $(function () {
         return exists;
     }
 
+    function migrateNote(key) {
+        var obj, note_obj, next_note;
+        console.log("Migrating note");
+        if(key !== undefined){
+            obj = getLocalObject(key);
+            note_obj = {note: obj.note, title:  obj.title};
+            next_note = getNextNote();
+            setLocalObject(next_note, note_obj);
+            deleteNote(key);
+
+        }
+        
+    }
+
     /*  
     **  Switches Active Note, Loads WYSIWYG from LocalStorage                  
     */
     function loadNote(note_id) {
-        var note = getLocalObject(note_id);
-        NoteThis.editor.setCode(getLocalObject(note_id).note);
+        var thisNote = getLocalObject(note_id);
+        console.log("Note ID" + note_id);
+        console.log(thisNote);
+        NoteThis.editor.setCode(thisNote.note);
         //$('#editable').html(localStorage.getObject(note_id).note).focus();
-        $('#title').val(getLocalObject(note_id).title);
+        $('#title').val(thisNote.title);
         $('#notes_tabs li.active').removeClass('active');
         $('#' + note_id).parent().addClass('active');
 
@@ -170,8 +189,7 @@ $(function () {
         var num = 0, nextNote;
         do{
             num = num + 1;
-            nextNote = "myClipboard-" + num;
-            
+            nextNote = "myClipboard-" + num;            
         }   while(nextNote in localStorage);
         return nextNote;
     }
@@ -186,6 +204,7 @@ $(function () {
 
         note_obj = {note: '', title: 'Note ' + current_note.split('myClipboard-')[1]};
         setLocalObject(current_note, note_obj);
+
         //insert note in drop down with Text / title of Note
         addDropDown(current_note, note_obj.title);
         loadNote(current_note);
@@ -217,11 +236,11 @@ $(function () {
     function initialize() {
         var exists;
 
-        //Load the NoteList, if any notes exist
-        exists = updateNoteList();
-
         //Load the exitor
         createEditor();
+
+        //Load the NoteList, if any notes exist
+        exists = updateNoteList();
 
         //If no note exists, create one.  Otherwise, check to see if we have an active note, and load it.  Otherwise, just load an existing note.
         if (!exists) {
