@@ -358,9 +358,9 @@ $(function () {
                     }
                 }   
             }
-            initialize();
+            updateNoteList(); //do this again to handle async loading and speed up initialization
         });
-
+        initialize();
 
         NoteThis.FireBaseUser.on('value', function (snapshot) {
             if(snapshot.val() !== null) {
