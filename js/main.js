@@ -257,11 +257,11 @@ $(function () {
 
     }
 
-    function initialize() {
+    function initialize(updateList) {
         var exists;
 
-        //Load the exitor
-        createEditor();
+        updateList = updateList || false;
+
         //Load the NoteList, if any notes exist
         exists = updateNoteList();
 
@@ -276,6 +276,7 @@ $(function () {
                 loadNote(exists);
             }
         }
+
     }
 
     function loggedOutSetup() {
@@ -374,11 +375,11 @@ $(function () {
                         setLocalObject(key, note_obj)
                     }
                 }   
+                
             }
+            initialize();
             //updateNoteList(); //do this again to handle async loading and speed up initialization
         });
-        initialize();
-
         // NoteThis.FireBaseUser.on('value', function (snapshot) {
         //     if(snapshot.val() !== null) {
         //         NoteThis.userData = snapshot.val();
@@ -401,6 +402,9 @@ $(function () {
             return value && JSON.parse(value);
         };
 
+        //Load the exitor
+        createEditor();
+
         NoteThis.myDataReference = new Firebase('https://definedclarity.firebaseio.com/');
         NoteThis.authClient = new FirebaseAuthClient(NoteThis.myDataReference, function (error, user) {
             if (error) {
@@ -408,8 +412,9 @@ $(function () {
             // an error occurred while attempting login
             } else if (user) {
             //User Is Logged In
-                loggedInSetup(user);
                 setupFireBaseHandlers(user.id);
+                loggedInSetup(user);
+                
             } else {
             // User Is Logged Out
                 loggedOutSetup();
@@ -434,7 +439,9 @@ $(function () {
         });
 
         $('#logins').on("click", '#logout', function () {
+
             NoteThis.authClient.logout();
+            clearCloudNotes();
             location.reload(); //Force a Reload to reapply loggedin/loggedout setup
         });
 
