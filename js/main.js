@@ -230,14 +230,41 @@ $(function () {
         $('#redactor').redactor({
             focus: true,
             buttons: buttons,
+            toolbarExternal: '#toolbar',
             callback: function(obj)
             {
                 NoteThis.editor = obj;
+                attachScrollObserver();
             },
             keyupCallback: function(obj, event) {
                 saveProgress();
             }
         });
+    }
+
+    function attachScrollObserver(){
+
+        var height = $('#edit_wrapper').offset().top;
+        console.log(height);
+
+
+        var $window = $(window);
+        // var height = $('.featured').height();
+        // var qheight = $('.site_header').height() + $('.quick_links').height()
+
+         $window.scroll(function(e) {
+            console.log($window.scrollTop());
+
+             if($window.scrollTop() > height){
+                console.log("Here!");
+                 $("#toolbar, .redactor_box").addClass('scrollfix');   
+
+             } else {
+                console.log("Window - " + $window.scrollTop() + " height " + height );
+                 $("#toolbar, .redactor_box").removeClass('scrollfix');
+             }
+        });
+
     }
 
     function initialize() {
@@ -274,7 +301,7 @@ $(function () {
         );
         initialize();
         //clear local storage
-        localStorage.clear();
+
     }
 
     function loggedInSetup(user) {
@@ -358,16 +385,15 @@ $(function () {
                     }
                 }   
             }
-            updateNoteList(); //do this again to handle async loading and speed up initialization
+            //updateNoteList(); //do this again to handle async loading and speed up initialization
         });
         initialize();
 
-        NoteThis.FireBaseUser.on('value', function (snapshot) {
-            if(snapshot.val() !== null) {
-                NoteThis.userData = snapshot.val();
-                console.log("OMG FIREBASE EVENT TRIGGARED");
-            }
-        });
+        // NoteThis.FireBaseUser.on('value', function (snapshot) {
+        //     if(snapshot.val() !== null) {
+        //         NoteThis.userData = snapshot.val();
+        //     }
+        // });
 
     }
 

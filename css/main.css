@@ -69,3 +69,13 @@ body{
 .redactor_editor{
     min-height:200px;
 }
+
+#toolbar.scrollfix{
+    position: fixed;
+    top: 0;
+    z-index: 1;
+}
+
+.redactor_box.scrollfix{
+    padding-top: 33px;
+}
