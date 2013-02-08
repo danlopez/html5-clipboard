@@ -99,7 +99,7 @@ $(function () {
 
     /* Take a previously online note, and convert it back to a local note */
     function pushNoteLocal(note_object) {
-        //TO DO
+        //TO DO.  This should ONLY happen when a user's login expires and they still have local copies
         console.log("Unwritten function!");
     }
 
@@ -130,7 +130,6 @@ $(function () {
 
     function updateNoteList() {
         var exists = false, i, temp, key;
-
         $('#notes_tabs').html('');
         for (var key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
@@ -210,7 +209,7 @@ $(function () {
         current_note = getNextNote();
         //create new note
 
-        note_obj = {note: '', title: 'Note ' + current_note.split('myClipboard-')[1]};
+        note_obj = {note: '', title: 'New Note '};
         setLocalObject(current_note, note_obj);
 
         //insert note in drop down with Text / title of Note
@@ -246,7 +245,6 @@ $(function () {
 
         //Load the exitor
         createEditor();
-
         //Load the NoteList, if any notes exist
         exists = updateNoteList();
 
@@ -275,6 +273,8 @@ $(function () {
             })
         );
         initialize();
+        //clear local storage
+        localStorage.clear();
     }
 
     function loggedInSetup(user) {
@@ -358,9 +358,9 @@ $(function () {
                     }
                 }   
             }
+            initialize();
         });
 
-        initialize();
 
         NoteThis.FireBaseUser.on('value', function (snapshot) {
             if(snapshot.val() !== null) {
@@ -368,6 +368,7 @@ $(function () {
                 console.log("OMG FIREBASE EVENT TRIGGARED");
             }
         });
+
     }
 
     /***********************************************************************************************/
