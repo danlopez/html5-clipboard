@@ -123,9 +123,9 @@ $(function () {
     }
 
     function addDropDown(id, title, myClass) {
-        var thisClass = myClass || '';
-        thisClass = thisClass + " switch_note";
-        $('#notes_tabs').append('<li><a href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
+        var thisClass = (myClass || '');
+        thisClass = thisClass + " truncate switch_note";
+        $('#notes_tabs').append('<li><a title="' + title + '" href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
     }
 
     function updateNoteList() {
@@ -283,22 +283,26 @@ $(function () {
         $('#logins .dropdown-menu').html('').append(
             $("<li />", {
                     'data-placement': "bottom",
+                    'class': "tip",
                     'rel': "tooltip",
-                    'title': "Online tool sync still very much in beta.  Please do not login if you're afraid to lose notes!", 
+                    'data-delay': 500,
+                    'title': "Login to keep your notes stored online and available anywhere.", 
                     'id': "facebook_login",
-                    'html': "<a>Facebook Login</a>"
+                    'html': "<a href='#'>Facebook Login</a>"
                 })
             ).append(
                 $("<li />", {
                     'data-placement': "bottom",
+                    'class' : "tip",
                     'rel': "tooltip",
-                    'title': "Online tool sync still very much in beta.  Please do not login if you're afraid to lose notes!", 
+                    'data-delay': 500,
+                    'title': "Login to keep your notes stored online and available anywhere.", 
                     'id': "twitter_login",
-                    'html': "<a>Twitter Login</a>"
+                    'html': "<a href='#'>Twitter Login</a>"
                 })
             )
 
-        $('#facebook_login, #twitter_login').tooltip();
+        $('.tip').tooltip();
 
 
         initialize();
@@ -494,15 +498,12 @@ $(function () {
         });
 
         $('#title').on('input', function () {
-            $('#' + NoteThis.activeNote).html($(this).val());
+            $('#' + NoteThis.activeNote).html($(this).val()).attr("title", $(this).val());
         });
 
         $('#download').on('click', function () {
             export_note();
         });
-
-
-
 
     /***********************************************************************************************/
     } else {

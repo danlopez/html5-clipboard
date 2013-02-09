@@ -79,3 +79,26 @@ body{
 .redactor_box.scrollfix{
     padding-top: 33px;
 }
+
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.active .truncate {
+    white-space: normal;
+}
+
+.delete-forever {
+    margin-top: -5px;
+}
+
+.note-list{
+    padding: 0px;
+    min-height: 0px;
+}
+
+.note-list ul{
+    padding-right: 0px;
+}
