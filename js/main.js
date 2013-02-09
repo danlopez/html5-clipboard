@@ -374,6 +374,11 @@ $(function () {
         var i, key, $parent;
 
         localStorage.removeItem(note_id);
+
+        if (NoteThis.FireBaseUser) {
+            NoteThis.FireBaseUser.child(NoteThis.activeNote).set(null);
+        }
+
         $parent = $('#' + note_id).parent();
 
         for (var key in localStorage){
