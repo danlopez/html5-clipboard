@@ -1,7 +1,5 @@
 /*global $, jQuery, window, Storage, localStorage, alert, document, openFile, Firebase, FirebaseAuthClient, clearTimeout, setTimeout, location */
 
-console.log("Running");
-
 $(function () {
     'use strict';
 
@@ -40,7 +38,6 @@ $(function () {
         for (var prop in obj) {
             if (hasOwnProperty.call(obj, prop)) size = size + 1;
           }
-          console.log("Size0>" + size);
           return size;
     }
 
@@ -73,11 +70,9 @@ $(function () {
             note_obj = {note: content, title: $('#title').val()};
             //setLocalObject(NoteThis.activeNote, note_obj);
             if (NoteThis.FireBaseUser) {
-                console.log("In!");
                 if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
                     pushNewNote(note_obj);
                 } else {   
-                    console.log("Active note not part of my clipboard!" + NoteThis.activeNote);
                     NoteThis.FireBaseUser.child(NoteThis.activeNote).update(note_obj);
                     setLocalObject(NoteThis.activeNote, note_obj);
                 }
@@ -111,8 +106,6 @@ $(function () {
         } else {
             newNoteNum = getObjectLength(NoteThis.userData) + 1
             newNote = "fireClip-" + newNoteNum; // Name is 1 more than the rest of the notes
-            console.log(newNote);
-            console.log(NoteThis.userData);
         }
 
         NoteThis.FireBaseUser.child(newNote).update(note_object); 
@@ -153,7 +146,6 @@ $(function () {
 
     function migrateNote(key) {
         var obj, note_obj, next_note;
-        console.log("Migrating note");
         if(key !== undefined){
             try{
                 obj = getLocalObject(key);
@@ -175,7 +167,6 @@ $(function () {
     function loadNote(note_id) {
 
         var thisNote = getLocalObject(note_id);
-        console.log("This note = " + thisNote);
         
         thisNote.note = thisNote.note || "";
         thisNote.title = thisNote.title || "untitled";
@@ -184,10 +175,8 @@ $(function () {
         //$('#editable').html(localStorage.getObject(note_id).note).focus();
         $('#title').val(thisNote.title);
         $('#notes_tabs li.active').removeClass('active');
-        console.log($('#' + note_id).parent());
         $('#' + note_id).parent().addClass('active');
 
-        console.log(note_id);
         NoteThis.activeNote = note_id;
         localStorage.setItem('activeNote', note_id);
     }
@@ -208,7 +197,6 @@ $(function () {
     **  Generates a local note and makes it active
     */
     function createNote() {
-        console.log("Note created");
         var current_note, note_obj;
         current_note = getNextNote();
         //create new note
@@ -376,22 +364,22 @@ $(function () {
         localStorage.removeItem(note_id);
 
         if (NoteThis.FireBaseUser) {
-            NoteThis.FireBaseUser.child(NoteThis.activeNote).set(null);
+            NoteThis.FireBaseUser.child(note_id).set(null);
         }
 
+        //Get the menu item wrapper, we'll need this in a bit
         $parent = $('#' + note_id).parent();
 
         for (var key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('myClipboard-') >= 0 || key.indexOf('fireClip-') >= 0) {
                     loadNote(key);
-                    $parent.fadeOut(300, function() { $(this).remove(); });
+                    $parent.fadeOut(300, function() { $(this).remove(); }); //Remove the note
                     return;
                 }
             }
         }
-        $parent = $('#' + note_id).parent();
-        $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); 
+        $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); //Remove the note, and create a new one
     }
 
     /******
@@ -400,7 +388,6 @@ $(function () {
      ****************/
 
     function setupFireBaseHandlers(user_id) {
-        console.log("Setting up Firebase handlers");
         var key, note_obj;
         NoteThis.FireBaseUser = new Firebase('https://definedclarity.firebaseio.com/users/' + user_id);
         NoteThis.FireBaseUser.once('value', function (snapshot) {
@@ -414,7 +401,6 @@ $(function () {
                 
             }
             initialize();
-            //updateNoteList(); //do this again to handle async loading and speed up initialization
         });
         // NoteThis.FireBaseUser.on('value', function (snapshot) {
         //     if(snapshot.val() !== null) {
@@ -426,17 +412,6 @@ $(function () {
 
     /***********************************************************************************************/
     if (supports_html5_storage()) {
-
-        /****** ADD OBJECT SUPPORT TO LOCALSTORAGE ********/
-        //NOT SUPPORTED IN IE8
-        Storage.prototype.setObject = function (key, value) {
-            this.setItem(key, JSON.stringify(value));
-        };
-
-        Storage.prototype.getObject = function (key) {
-            var value = this.getItem(key);
-            return value && JSON.parse(value);
-        };
 
         //Load the exitor
         createEditor();
@@ -471,9 +446,11 @@ $(function () {
          ****************/
 
         $('#logins').on('click', '#facebook_login', function (e) {
-            NoteThis.authClient.login('facebook');
             e.preventDefault();
+            NoteThis.authClient.login('facebook', {
+              rememberMe: true
         });
+
         $('#logins').on('click', '#twitter_login', function (e) {
             NoteThis.authClient.login('twitter');
             e.preventDefault();
