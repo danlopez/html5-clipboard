@@ -104,7 +104,7 @@ $(function () {
         if(!NoteThis.userData){
             newNote = "fireClip-1"; // No notes found
         } else {
-            newNoteNum = getObjectLength(NoteThis.userData) + 1
+            newNoteNum = getObjectLength(NoteThis.userData) + 1;
             newNote = "fireClip-" + newNoteNum; // Name is 1 more than the rest of the notes
         }
 
@@ -165,15 +165,14 @@ $(function () {
     **  Switches Active Note, Loads WYSIWYG from LocalStorage                  
     */
     function loadNote(note_id) {
-
         var thisNote = getLocalObject(note_id);
         
         thisNote.note = thisNote.note || "";
         thisNote.title = thisNote.title || "untitled";
-            NoteThis.editor.setCode(thisNote.note);
-
-        //$('#editable').html(localStorage.getObject(note_id).note).focus();
+        
+        NoteThis.editor.setCode(thisNote.note);
         $('#title').val(thisNote.title);
+
         $('#notes_tabs li.active').removeClass('active');
         $('#' + note_id).parent().addClass('active');
 
@@ -364,22 +363,22 @@ $(function () {
         localStorage.removeItem(note_id);
 
         if (NoteThis.FireBaseUser) {
-            NoteThis.FireBaseUser.child(note_id).set(null);
+            NoteThis.FireBaseUser.child(NoteThis.activeNote).set(null);
         }
 
-        //Get the menu item wrapper, we'll need this in a bit
         $parent = $('#' + note_id).parent();
 
         for (var key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('myClipboard-') >= 0 || key.indexOf('fireClip-') >= 0) {
                     loadNote(key);
-                    $parent.fadeOut(300, function() { $(this).remove(); }); //Remove the note
+                    $parent.fadeOut(300, function() { $(this).remove(); });
                     return;
                 }
             }
         }
-        $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); //Remove the note, and create a new one
+        $parent = $('#' + note_id).parent();
+        $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); 
     }
 
     /******
@@ -401,12 +400,15 @@ $(function () {
                 
             }
             initialize();
+            //updateNoteList(); //do this again to handle async loading and speed up initialization
         });
-        // NoteThis.FireBaseUser.on('value', function (snapshot) {
-        //     if(snapshot.val() !== null) {
-        //         NoteThis.userData = snapshot.val();
-        //     }
-        // });
+
+        //This is used to keep track of the notes on the server
+        NoteThis.FireBaseUser.on('value', function (snapshot) {
+            if(snapshot.val() !== null) {
+                NoteThis.userData = snapshot.val();
+            }
+        });
 
     }
 
@@ -448,13 +450,17 @@ $(function () {
         $('#logins').on('click', '#facebook_login', function (e) {
             e.preventDefault();
             NoteThis.authClient.login('facebook', {
-              rememberMe: true
+                rememberMe: true
+            });
         });
 
         $('#logins').on('click', '#twitter_login', function (e) {
-            NoteThis.authClient.login('twitter');
             e.preventDefault();
+            NoteThis.authClient.login('twitter', {
+                rememberMe: true
+            });
         });
+
         $('#logins').on("click", '#logout', function () {
 
             NoteThis.authClient.logout();
