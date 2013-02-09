@@ -101,12 +101,11 @@ $(function () {
     /* Generate a NEW Server-Side Note Object*/
     function pushNewNote(note_object) {
         var newNote, newNoteNum;
-        if(!NoteThis.userData){
-            newNote = "fireClip-1"; // No notes found
-        } else {
-            newNoteNum = getObjectLength(NoteThis.userData) + 1;
-            newNote = "fireClip-" + newNoteNum; // Name is 1 more than the rest of the notes
-        }
+        do{
+            newNote = "fireClip-" + newNoteNum;
+            newNoteNum = newNoteNum + 1;
+        } while(newNote in NoteThis.userData);
+
 
         NoteThis.FireBaseUser.child(newNote).update(note_object); 
         setLocalObject(newNote, note_object);
