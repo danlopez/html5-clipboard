@@ -100,7 +100,7 @@ $(function () {
 
     /* Generate a NEW Server-Side Note Object*/
     function pushNewNote(note_object) {
-        var newNote, newNoteNum;
+        var newNote, newNoteNum = 1;
         do{
             newNote = "fireClip-" + newNoteNum;
             newNoteNum = newNoteNum + 1;
