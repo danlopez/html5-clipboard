@@ -66,8 +66,7 @@ $(function () {
         }
         
         try {
-            content = NoteThis.editor.getCode();
-            note_obj = {note: content, title: $('#title').val()};
+            note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val()};
             //setLocalObject(NoteThis.activeNote, note_obj);
             if (NoteThis.FireBaseUser) {
                 if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
@@ -78,7 +77,6 @@ $(function () {
                 }
             } else {
                 if(NoteThis.activeNote.indexOf('fireClip-') >= 0){
-
                     pushNoteLocal(note_obj);
                     setLocalObject(NoteThis.activeNote, note_obj); //REMOVE THIS ONCE pushNOTE LOCAL IS WRITTEN
                 } else {
@@ -105,7 +103,6 @@ $(function () {
             newNote = "fireClip-" + newNoteNum;
             newNoteNum = newNoteNum + 1;
         } while(newNote in NoteThis.userData);
-
 
         NoteThis.FireBaseUser.child(newNote).update(note_object); 
         setLocalObject(newNote, note_object);
