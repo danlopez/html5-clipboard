@@ -175,6 +175,7 @@ $(function () {
     function loadNote(note_id) {
 
         var thisNote = getLocalObject(note_id);
+        console.log("This note = " + thisNote);
         
         thisNote.note = thisNote.note || "";
         thisNote.title = thisNote.title || "untitled";
@@ -183,8 +184,10 @@ $(function () {
         //$('#editable').html(localStorage.getObject(note_id).note).focus();
         $('#title').val(thisNote.title);
         $('#notes_tabs li.active').removeClass('active');
+        console.log($('#' + note_id).parent());
         $('#' + note_id).parent().addClass('active');
 
+        console.log(note_id);
         NoteThis.activeNote = note_id;
         localStorage.setItem('activeNote', note_id);
     }
@@ -205,6 +208,7 @@ $(function () {
     **  Generates a local note and makes it active
     */
     function createNote() {
+        console.log("Note created");
         var current_note, note_obj;
         current_note = getNextNote();
         //create new note
@@ -367,19 +371,22 @@ $(function () {
     }
 
     function deleteNote(note_id) {
-        var i, key;
+        var i, key, $parent;
 
         localStorage.removeItem(note_id);
+        $parent = $('#' + note_id).parent();
 
         for (var key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('myClipboard-') >= 0 || key.indexOf('fireClip-') >= 0) {
                     loadNote(key);
-                    break;
+                    $parent.fadeOut(300, function() { $(this).remove(); });
+                    return;
                 }
             }
         }
-        $('#' + note_id).parent().fadeOut();
+        $parent = $('#' + note_id).parent();
+        $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); 
     }
 
     /******
