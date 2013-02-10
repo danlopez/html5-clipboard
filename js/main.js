@@ -157,7 +157,6 @@ $(function () {
                 }
             }
         }
-
         for (key in NoteThis.userData){
             if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
                 if (key.indexOf('fireClip-') >= 0) {
@@ -245,8 +244,9 @@ $(function () {
         loadNote(current_note);
     }
 
+    //Check for the note in localstorage, or check if remote data exists, and check for it there.
     function noteExists(note_id) {
-        return (note_id in localStorage);
+        return (note_id in localStorage || (NoteThis.userData && (note_id in NoteThis.userData)));
     }
 
     function createEditor(){
@@ -331,7 +331,7 @@ $(function () {
         $('.tip').tooltip();
 
 
-        initialize();
+        initialize(true);
         //clear local storage
 
     }
@@ -404,10 +404,18 @@ $(function () {
         }
 
         $parent = $('#' + note_id).parent();
-
-        for (var key in localStorage){
+        for (key in NoteThis.userData){
+            if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
+                if (key.indexOf('fireClip-') >= 0) {
+                    loadNote(key);
+                    $parent.fadeOut(300, function() { $(this).remove(); });
+                    return;
+                }
+            }
+        }
+        for (key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
-                if (key.indexOf('myClipboard-') >= 0 || key.indexOf('fireClip-') >= 0) {
+                if (key.indexOf('myClipboard-') >= 0) {
                     loadNote(key);
                     $parent.fadeOut(300, function() { $(this).remove(); });
                     return;
