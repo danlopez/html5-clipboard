@@ -166,7 +166,6 @@ $(function () {
         if(loader){
             $('#warningGradientOuterBarG').hide();
         }
-
         return exists;
     }
 
@@ -193,6 +192,9 @@ $(function () {
     function loadNote(note_id) {
         var thisNote;
 
+        $('#notes_tabs li.active').removeClass('active');
+        $('#' + note_id).parent().addClass('active');
+
         if (note_id.indexOf('fireClip-') >= 0) {
             thisNote = {note: NoteThis.userData[note_id].note, title: NoteThis.userData[note_id].title};
         } else {
@@ -204,9 +206,6 @@ $(function () {
         
         NoteThis.editor.setCode(thisNote.note);
         $('#title').val(thisNote.title);
-
-        $('#notes_tabs li.active').removeClass('active');
-        $('#' + note_id).parent().addClass('active');
 
         NoteThis.activeNote = note_id;
         localStorage.setItem('activeNote', note_id);
@@ -413,6 +412,18 @@ $(function () {
         $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); 
     }
 
+    //This function definitely has a limited shelf-life.  Used to knock all the fireclip entries out of localstorage.
+    // having them in there can cause some issues when loading notes.
+    function wipeLocalFireClips() {
+        for (key in localStorage){
+            if(Object.prototype.hasOwnProperty.call(localStorage,key)){
+                if (key.indexOf('fireClip-') >= 0) {
+                    localStorage.removeItem(key);    
+                }
+            }
+        }
+    }
+
     /******
      * FireBase Handler
      *
@@ -441,7 +452,6 @@ $(function () {
                 NoteThis.userData = snapshot.val();
             }
         });
-
     }
 
     /***********************************************************************************************/
@@ -449,6 +459,8 @@ $(function () {
 
         //Load the exitor
         createEditor();
+
+        wipeLocalFireClips();
 
         NoteThis.myDataReference = new Firebase('https://definedclarity.firebaseio.com/');
         NoteThis.authClient = new FirebaseAuthClient(NoteThis.myDataReference, function (error, user) {
