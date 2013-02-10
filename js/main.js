@@ -42,12 +42,10 @@ $(function () {
     }
 
     function setLocalObject(key, value){
-        console.log("Called set!");
         localStorage.setItem(key, JSON.stringify(value));
     }
 
     function getLocalObject(key){
-        console.log("Called Get!");
         var value = localStorage.getItem(key);
         return value && JSON.parse(value);
     }
@@ -138,7 +136,6 @@ $(function () {
 
         var exists = false, i, temp, key, noteList;
         loader = loader || false;
-        console.log(loader);
         noteList = $('#notes_tabs').html('');
 
         if(!loader) {
@@ -347,19 +344,10 @@ $(function () {
                 'id': "logout",
                 'html': "<a>Logout</a>"
             })
-        ).append(
-            $("<li />", {
-                'id': "logout_keep_data",
-                'html': "<a>Logout and keep data</a>",
-                'data-placement': "bottom",
-                'rel': "tooltip",
-                'title': "Logout but keep local copies of all your notes", 
-            })
         );
         $('#logout_keep_data').tooltip();
 
         initialize();
-
     }
 
     function export_note() {
@@ -507,16 +495,10 @@ $(function () {
         });
 
         $('#logins').on("click", '#logout', function () {
-
-            NoteThis.authClient.logout();
-            localStorage.clear()
-            location.reload(); //Force a Reload to reapply loggedin/loggedout setup
-        });
-
-        $('#logins').on("click", '#logout_keep_data', function () {
             NoteThis.authClient.logout();
             location.reload(); //Force a Reload to reapply loggedin/loggedout setup
         });
+
         /*Triggers an update on other tabs when noteme is open in multiple windows*/
         $(window).on("storage", function () {
             updateNoteList();
