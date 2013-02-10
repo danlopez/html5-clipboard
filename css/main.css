@@ -997,6 +997,10 @@ body .redactor_toolbar li a.redactor_btn_alignment{background-position:-625px}
  *  NoteThis Stylesheet
  *
  **/
+
+#warningGradientOuterBarG{height:20px;/*width:160px;*/border:1px solid #c2c2c2;overflow:hidden;background-color:#e6e6e6;background:-webkit-gradient(linear,0% 0,0% 100%,from(#e6e6e6),to(#c2c2c2));background:-moz-linear-gradient(top,#e6e6e6,#c2c2c2);background:-webkit-linear-gradient(top,#e6e6e6,#c2c2c2);background:-ms-linear-gradient(top,#e6e6e6,#c2c2c2);background:-o-linear-gradient(top,#e6e6e6,#c2c2c2);background:linear-gradient(top,#e6e6e6,#c2c2c2)}.warningGradientBarLineG{background-color:#e6e6e6;float:left;width:14px;height:120px;margin-right:24px;margin-top:-28px;-moz-transform:rotate(45deg);-webkit-transform:rotate(45deg);-ms-transform:rotate(45deg);-o-transform:rotate(45deg);transform:rotate(45deg)}.warningGradientAnimationG{width:236px;-moz-animation-name:warningGradientAnimationG;-moz-animation-duration:1.6s;-moz-animation-iteration-count:infinite;-moz-animation-timing-function:linear;-webkit-animation-name:warningGradientAnimationG;-webkit-animation-duration:1.6s;-webkit-animation-iteration-count:infinite;-webkit-animation-timing-function:linear;-ms-animation-name:warningGradientAnimationG;-ms-animation-duration:1.6s;-ms-animation-iteration-count:infinite;-ms-animation-timing-function:linear;-o-animation-name:warningGradientAnimationG;-o-animation-duration:1.6s;-o-animation-iteration-count:infinite;-o-animation-timing-function:linear;animation-name:warningGradientAnimationG;animation-duration:1.6s;animation-iteration-count:infinite;animation-timing-function:linear}@-moz-keyframes warningGradientAnimationG{0%{margin-left:0}100%{margin-left:-38px}}@-webkit-keyframes warningGradientAnimationG{0%{margin-left:0}100%{margin-left:-38px}}@-ms-keyframes warningGradientAnimationG{0%{margin-left:0}100%{margin-left:-38px}}@-o-keyframes warningGradientAnimationG{0%{margin-left:0}100%{margin-left:-38px}}@keyframes warningGradientAnimationG{0%{margin-left:0}100%{margin-left:-38px}}
+
+ 
 #new_note {
     margin:0 0 10px 0;
 }

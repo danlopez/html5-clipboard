@@ -42,52 +42,69 @@ $(function () {
     }
 
     function setLocalObject(key, value){
+        console.log("Called set!");
         localStorage.setItem(key, JSON.stringify(value));
     }
 
     function getLocalObject(key){
+        console.log("Called Get!");
         var value = localStorage.getItem(key);
         return value && JSON.parse(value);
     }
 
+    //Timer function keeps from firing save too often.
     function saveProgress() {
         clearTimeout(NoteThis.saveTimer);
-        NoteThis.saveTimer = setTimeout(function () {
+        NoteThis.saveTimer = setTimeout(function () {       
             delayedSave();
         }, NoteThis.minSaveTime);
     }
 
-    function delayedSave() {
-        var content, note_obj;
-
-        //Save Occassionally gets fired when no note is active.  Safely ignore
+    //Splits save action depending on context (logged out, logged in),
+    //catches storage handling errors.
+    function delayedSave(){
+        //Safely ignore if no note is active.  
         if(NoteThis.activeNote === null){
             return;
         }
-        
-        try {
-            note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val()};
-            //setLocalObject(NoteThis.activeNote, note_obj);
-            if (NoteThis.FireBaseUser) {
-                if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
-                    pushNewNote(note_obj);
-                } else {   
-                    NoteThis.FireBaseUser.child(NoteThis.activeNote).update(note_obj);
-                    setLocalObject(NoteThis.activeNote, note_obj);
-                }
-            } else {
-                if(NoteThis.activeNote.indexOf('fireClip-') >= 0){
-                    pushNoteLocal(note_obj);
-                    setLocalObject(NoteThis.activeNote, note_obj); //REMOVE THIS ONCE pushNOTE LOCAL IS WRITTEN
-                } else {
-                    setLocalObject(NoteThis.activeNote, note_obj);
-                }                 
+        if (NoteThis.FireBaseUser) {
+            try{
+                delayedSaveOnline();
+            } catch (e){
+                alert("Save Operation Failed");
+                console.log(e);
             }
-        } catch (e) {
-            console.log(e);
-            alert("Current Save Operation failed.");
+        } else {
+            try {
+                 delayedSaveOffLine();
+            } catch (e) {
+                if(e.name === 'QUOTA_EXCEEDED_ERR'){
+                    $('#storageExceeded').modal('show');
+                } else {
+                    throw e; // Let any other errors bubble up
+                }
+            }
         }
-        
+    }
+
+    function delayedSaveOnline(){
+        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val()};  
+        if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
+            pushNewNote(note_obj);
+        } else {   
+            NoteThis.FireBaseUser.child(NoteThis.activeNote).update(note_obj);
+            setLocalObject(NoteThis.activeNote, note_obj);
+        }
+    }
+
+    function delayedSaveOffLine(){
+        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val()};
+        if(NoteThis.activeNote.indexOf('fireClip-') >= 0){
+            pushNoteLocal(note_obj);
+            setLocalObject(NoteThis.activeNote, note_obj); //REMOVE THIS ONCE pushNOTE LOCAL IS WRITTEN
+        } else {
+            setLocalObject(NoteThis.activeNote, note_obj);
+        }
     }
 
     /* Take a previously online note, and convert it back to a local note */
@@ -117,10 +134,18 @@ $(function () {
         $('#notes_tabs').append('<li><a title="' + title + '" href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
     }
 
-    function updateNoteList() {
-        var exists = false, i, temp, key;
-        $('#notes_tabs').html('');
-        for (var key in localStorage){
+    function updateNoteList(loader) {  
+
+        var exists = false, i, temp, key, noteList;
+        loader = loader || false;
+        console.log(loader);
+        noteList = $('#notes_tabs').html('');
+
+        if(!loader) {
+            $('#warningGradientOuterBarG').show();
+        }
+
+        for (key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('myClipboard-') >= 0) {
                     temp = getLocalObject(key).title || "untitled";
@@ -130,13 +155,23 @@ $(function () {
                     temp = migrateNote(key);
                     exists = key; 
                 }
+            }
+        }
+
+        for (key in NoteThis.userData){
+            if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
                 if (key.indexOf('fireClip-') >= 0) {
-                    temp = getLocalObject(key).title || "untitled";
+                    temp = NoteThis.userData[key].title || "untitled";
                     addDropDown(key, temp, 'cloud');
                     exists = key;
                 }
             }
         }
+
+        if(loader){
+            $('#warningGradientOuterBarG').hide();
+        }
+
         return exists;
     }
 
@@ -161,7 +196,13 @@ $(function () {
     **  Switches Active Note, Loads WYSIWYG from LocalStorage                  
     */
     function loadNote(note_id) {
-        var thisNote = getLocalObject(note_id);
+        var thisNote;
+
+        if (note_id.indexOf('fireClip-') >= 0) {
+            thisNote = {note: NoteThis.userData[note_id].note, title: NoteThis.userData[note_id].title};
+        } else {
+            thisNote = getLocalObject(note_id);
+        }
         
         thisNote.note = thisNote.note || "";
         thisNote.title = thisNote.title || "untitled";
@@ -250,7 +291,7 @@ $(function () {
         updateList = updateList || false;
 
         //Load the NoteList, if any notes exist
-        exists = updateNoteList();
+        exists = updateNoteList(updateList);
 
         //If no note exists, create one.  Otherwise, check to see if we have an active note, and load it.  Otherwise, just load an existing note.
         if (!exists) {
@@ -270,21 +311,19 @@ $(function () {
         $('#logins .dropdown-menu').html('').append(
             $("<li />", {
                     'data-placement': "bottom",
-                    'class': "tip",
+                    'class': "tip facebook_login",
                     'rel': "tooltip",
                     'data-delay': 500,
                     'title': "Login to keep your notes stored online and available anywhere.", 
-                    'id': "facebook_login",
                     'html': "<a href='#'>Facebook Login</a>"
                 })
             ).append(
                 $("<li />", {
                     'data-placement': "bottom",
-                    'class' : "tip",
+                    'class' : "tip twitter_login",
                     'rel': "tooltip",
                     'data-delay': 500,
                     'title': "Login to keep your notes stored online and available anywhere.", 
-                    'id': "twitter_login",
                     'html': "<a href='#'>Twitter Login</a>"
                 })
             )
@@ -318,6 +357,8 @@ $(function () {
             })
         );
         $('#logout_keep_data').tooltip();
+
+        initialize();
 
     }
 
@@ -387,16 +428,16 @@ $(function () {
         NoteThis.FireBaseUser = new Firebase('https://definedclarity.firebaseio.com/users/' + user_id);
         NoteThis.FireBaseUser.once('value', function (snapshot) {
             if (snapshot.val() !== null) {
-                for (key in snapshot.val()) {
-                    if (snapshot.val().hasOwnProperty(key)) {
-                        note_obj = {note: snapshot.val()[key].note, title: snapshot.val()[key].title};
-                        setLocalObject(key, note_obj)
-                    }
-                }   
+            //     for (key in snapshot.val()) {
+            //         if (snapshot.val().hasOwnProperty(key)) {
+            //             note_obj = {note: snapshot.val()[key].note, title: snapshot.val()[key].title};
+            //             setLocalObject(key, note_obj)
+            //         }
+                NoteThis.userData = snapshot.val();
+            }   
                 
-            }
-            initialize();
-            //updateNoteList(); //do this again to handle async loading and speed up initialization
+            // }
+            initialize(true);
         });
 
         //This is used to keep track of the notes on the server
@@ -443,14 +484,14 @@ $(function () {
          *
          ****************/
 
-        $('#logins').on('click', '#facebook_login', function (e) {
+        $('#logins, #storageExceeded').on('click', '.facebook_login', function (e) {
             e.preventDefault();
             NoteThis.authClient.login('facebook', {
                 rememberMe: true
             });
         });
 
-        $('#logins').on('click', '#twitter_login', function (e) {
+        $('#logins, #storageExceeded').on('click', '.twitter_login', function (e) {
             e.preventDefault();
             NoteThis.authClient.login('twitter', {
                 rememberMe: true
