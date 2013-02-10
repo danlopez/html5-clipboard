@@ -120,7 +120,6 @@ $(function () {
         } while(newNote in NoteThis.userData);
 
         NoteThis.FireBaseUser.child(newNote).update(note_object); 
-        setLocalObject(newNote, note_object);
         localStorage.removeItem(NoteThis.activeNote);    
         $('#' + NoteThis.activeNote).attr('id', newNote).addClass("cloud");
         NoteThis.activeNote = newNote;        
