@@ -1057,6 +1057,12 @@ body .redactor_toolbar li a.redactor_btn_alignment{background-position:-625px}
 .note-list ul{
     padding-right: 0px;
 }
+.note-list {
+    margin-top:10px;
+}
+#new_note {
+    margin-bottom: 0px;
+}
 /*@media (max-width: 767px) and  {
     #title {
         width: 200px;
@@ -1065,5 +1071,14 @@ body .redactor_toolbar li a.redactor_btn_alignment{background-position:-625px}
 @media (max-width: 480px) {
     #title {
         width: 125px;
+    }
+
+}
+@media (max-width: 767px) {
+    .note-list {
+        margin:0;
+    }
+    #new_note {
+        margin-bottom: 10px;
     }
 }
