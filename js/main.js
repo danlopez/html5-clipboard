@@ -415,7 +415,8 @@ $(function () {
     //This function definitely has a limited shelf-life.  Used to knock all the fireclip entries out of localstorage.
     // having them in there can cause some issues when loading notes.
     function wipeLocalFireClips() {
-        for (var key in localStorage){
+        var key;
+        for (key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('fireClip-') >= 0) {
                     localStorage.removeItem(key);    
