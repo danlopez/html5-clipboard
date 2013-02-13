@@ -280,6 +280,21 @@ $(function () {
 
     }
 
+    //fix sidebar on scroll
+    function fixSidebar(){
+        var height, $window = $(window);
+
+         $window.scroll(function(e) {
+            console.log('scrolling');
+            height = $('.side-nav-wrapper').offset().top+$('#new_note').height();
+             if($window.scrollTop() > height){
+                 $(".side-nav").addClass('scrollfix');   
+             } else {
+                 $(".side-nav").removeClass('scrollfix');
+             }
+        });
+    }
+
     function initialize(updateList) {
         var exists;
 
@@ -299,7 +314,7 @@ $(function () {
                 loadNote(exists);
             }
         }
-
+        fixSidebar();
     }
 
     function loggedOutSetup() {
@@ -524,6 +539,10 @@ $(function () {
         $('#notes_tabs').on('click', '.switch_note', function (e) {
             e.preventDefault();
             loadNote($(this).attr('id'));
+            if ($(window).width() < 768 && $('#sidebar_btn.collapsed').length <=0){
+                console.log('call');
+                $('.note-list').collapse('hide');
+            }
         });
 
         $('#delete_note').on('click', function (e) {
