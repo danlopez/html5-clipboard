@@ -129,6 +129,10 @@ $(function () {
         var thisClass = (myClass || '');
         thisClass = thisClass + " truncate switch_note";
         $('#notes_tabs').append('<li><a title="' + title + '" href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
+        //add active class if it should have it
+        if (NoteThis.activeNote == id) {
+            $('#'+id).parent().addClass('active');
+        }
     }
 
     function updateNoteList(loader) {  
@@ -536,6 +540,13 @@ $(function () {
         $(window).on("storage", function () {
             updateNoteList(true);
         });
+        //Reload the current note on focus, if there is an active note
+        $(window).on("focus", function(){
+            if (NoteThis.activeNote !== null){
+                loadNote(NoteThis.activeNote)
+            }
+        });
+
 
         //Create A New Note
         $('#new_note').on('click', function () {
