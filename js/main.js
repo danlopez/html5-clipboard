@@ -137,7 +137,7 @@ $(function () {
         loader = loader || false;
         noteList = $('#notes_tabs').html('');
 
-        if(!loader) {
+        if(!loader) { 
             $('#warningGradientOuterBarG').show();
         }
 
@@ -209,6 +209,10 @@ $(function () {
 
         NoteThis.activeNote = note_id;
         localStorage.setItem('activeNote', note_id);
+        //also set this in firebase if user is logged in
+        if (NoteThis.FireBaseUser) {
+            NoteThis.FireBaseUser.child('activeNote').set(note_id);
+        }
     }
 
     /*  
@@ -285,7 +289,6 @@ $(function () {
         var height, $window = $(window);
 
          $window.scroll(function(e) {
-            console.log('scrolling');
             height = $('.side-nav-wrapper').offset().top+$('#new_note').height();
              if($window.scrollTop() > height){
                  $(".side-nav").addClass('scrollfix');   
@@ -300,6 +303,8 @@ $(function () {
 
         updateList = updateList || false;
 
+        console.log('initialized');
+
         //Load the NoteList, if any notes exist
         exists = updateNoteList(updateList);
 
@@ -308,6 +313,10 @@ $(function () {
             createNote();
         } else {
             NoteThis.activeNote = localStorage.getItem('activeNote');
+
+            if (NoteThis.activeNote !== null && NoteThis.FireBaseUser) {
+                NoteThis.activeNote = NoteThis.FireBaseUser.activeNote;
+            }
             if (NoteThis.activeNote !== null && noteExists(NoteThis.activeNote)) {
                 loadNote(NoteThis.activeNote);
             } else {
@@ -340,7 +349,6 @@ $(function () {
 
         $('.tip').tooltip();
 
-
         initialize(true);
         //clear local storage
 
@@ -359,8 +367,6 @@ $(function () {
             })
         );
         $('#logout_keep_data').tooltip();
-
-        initialize();
     }
 
     function export_note() {
@@ -528,7 +534,7 @@ $(function () {
 
         /*Triggers an update on other tabs when noteme is open in multiple windows*/
         $(window).on("storage", function () {
-            updateNoteList();
+            updateNoteList(true);
         });
 
         //Create A New Note
