@@ -135,16 +135,16 @@ $(function () {
         }
     }
 
-    function updateNoteList(loader) {  
+    function updateNoteList(loader, updateOnFocus) {  
 
         var exists = false, cloudNotes = false, temp, key, noteList;
         loader = loader || false;
+        updateOnFocus = updateOnFocus || false;
         noteList = $('#notes_tabs').html('');
 
         if(!loader) { 
             $('#warningGradientOuterBarG').show();
         }
-
         for (key in NoteThis.userData){
             if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
                 if (key.indexOf('fireClip-') >= 0) {
@@ -159,14 +159,14 @@ $(function () {
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('myClipboard-') >= 0) {
                     temp = getLocalObject(key).title || "untitled";
-                    if (cloudNotes && temp === 'New Note' && getLocalObject(key).note ===''){
+                    if (! updateOnFocus && cloudNotes && temp === 'New Note' && getLocalObject(key).note ===''){
                         console.log('blank note removed');
                         localStorage.removeItem(key);
                     }
                     else {
                         addDropDown(key, temp);
+                        exists = key;
                     }
-                    exists = key;
                 } else if (key.indexOf('myClipboard') >= 0) {     
                     temp = migrateNote(key);
                     exists = key; 
@@ -313,9 +313,6 @@ $(function () {
         var exists;
 
         updateList = updateList || false;
-
-        console.log('initialized');
-
         //Load the NoteList, if any notes exist
         exists = updateNoteList(updateList);
 
@@ -482,9 +479,16 @@ $(function () {
         });
 
         //This is used to keep track of the notes on the server
-        NoteThis.FireBaseUser.on('value', function (snapshot) {
+        // NoteThis.FireBaseUser.on('value', function (snapshot) {
+        //     if(snapshot.val() !== null) {
+        //         NoteThis.userData = snapshot.val();
+        //     }
+        // });
+
+        //Testing use of child changed instead of value to reduce data out
+        NoteThis.FireBaseUser.on('child_changed', function(snapshot) {
             if(snapshot.val() !== null) {
-                NoteThis.userData = snapshot.val();
+                NoteThis.userData[snapshot.name()] = snapshot.val();
             }
         });
     }
@@ -542,13 +546,14 @@ $(function () {
 
         $('#logins').on("click", '#logout', function () {
             NoteThis.authClient.logout();
-            location.reload(); //Force a Reload to reapply loggedin/loggedout setup
+            window.location.reload(); //Force a Reload to reapply loggedin/loggedout setup
         });
 
-        /*Triggers an update on other tabs when noteme is open in multiple windows*/
+        /*Triggers an update on other tabs when notethis is open in multiple windows*/
         $(window).on("storage", function () {
-            updateNoteList(true);
+            updateNoteList(true, true);
         });
+
         //Reload the current note on focus, if there is an active note
         $(window).on("focus", function(){
             if (NoteThis.activeNote !== null){
@@ -566,7 +571,6 @@ $(function () {
             e.preventDefault();
             loadNote($(this).attr('id'));
             if ($(window).width() < 768 && $('#sidebar_btn.collapsed').length <=0){
-                console.log('call');
                 $('.note-list').collapse('hide');
             }
         });
