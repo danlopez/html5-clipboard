@@ -485,7 +485,7 @@ $(function () {
         //     }
         // });
 
-        //Testing use of child changed instead of value to reduce data out
+        //Testing use of child changed instead of value to reduce firebase bandwidth
         NoteThis.FireBaseUser.on('child_changed', function(snapshot) {
             if(snapshot.val() !== null) {
                 NoteThis.userData[snapshot.name()] = snapshot.val();
