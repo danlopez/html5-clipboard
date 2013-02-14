@@ -137,7 +137,7 @@ $(function () {
 
     function updateNoteList(loader) {  
 
-        var exists = false, i, temp, key, noteList;
+        var exists = false, cloudNotes = false, temp, key, noteList;
         loader = loader || false;
         noteList = $('#notes_tabs').html('');
 
@@ -145,11 +145,27 @@ $(function () {
             $('#warningGradientOuterBarG').show();
         }
 
+        for (key in NoteThis.userData){
+            if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
+                if (key.indexOf('fireClip-') >= 0) {
+                    temp = NoteThis.userData[key].title || "untitled";
+                    addDropDown(key, temp, 'cloud');
+                    exists = key;
+                    cloudNotes = true;
+                }
+            }
+        }
         for (key in localStorage){
             if(Object.prototype.hasOwnProperty.call(localStorage,key)){
                 if (key.indexOf('myClipboard-') >= 0) {
                     temp = getLocalObject(key).title || "untitled";
-                    addDropDown(key, temp);
+                    if (cloudNotes && temp === 'New Note' && getLocalObject(key).note ===''){
+                        console.log('blank note removed');
+                        localStorage.removeItem(key);
+                    }
+                    else {
+                        addDropDown(key, temp);
+                    }
                     exists = key;
                 } else if (key.indexOf('myClipboard') >= 0) {     
                     temp = migrateNote(key);
@@ -157,15 +173,7 @@ $(function () {
                 }
             }
         }
-        for (key in NoteThis.userData){
-            if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
-                if (key.indexOf('fireClip-') >= 0) {
-                    temp = NoteThis.userData[key].title || "untitled";
-                    addDropDown(key, temp, 'cloud');
-                    exists = key;
-                }
-            }
-        }
+        
 
         if(loader){
             $('#warningGradientOuterBarG').hide();
@@ -195,7 +203,6 @@ $(function () {
     */
     function loadNote(note_id) {
         var thisNote;
-
         $('#notes_tabs li.active').removeClass('active');
         $('#' + note_id).parent().addClass('active');
 
@@ -239,7 +246,7 @@ $(function () {
         current_note = getNextNote();
         //create new note
 
-        note_obj = {note: '', title: 'New Note '};
+        note_obj = {note: '', title: 'New Note'};
         setLocalObject(current_note, note_obj);
 
         //insert note in drop down with Text / title of Note
@@ -316,10 +323,12 @@ $(function () {
         if (!exists) {
             createNote();
         } else {
-            NoteThis.activeNote = localStorage.getItem('activeNote');
 
-            if (NoteThis.activeNote !== null && NoteThis.FireBaseUser) {
-                NoteThis.activeNote = NoteThis.FireBaseUser.activeNote;
+            if (NoteThis.FireBaseUser) {
+                NoteThis.activeNote = NoteThis.userData.activeNote;
+            }
+            else if (NoteThis.activeNote ===null) {
+                NoteThis.activeNote = localStorage.getItem('activeNote');
             }
             if (NoteThis.activeNote !== null && noteExists(NoteThis.activeNote)) {
                 loadNote(NoteThis.activeNote);
