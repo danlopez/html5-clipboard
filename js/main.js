@@ -129,29 +129,21 @@ $(function () {
         var thisClass = (myClass || '');
         thisClass = thisClass + " truncate switch_note";
         $('#notes_tabs').append('<li><a title="' + title + '" href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
+        //add active class if it should have it
+        if (NoteThis.activeNote == id) {
+            $('#'+id).parent().addClass('active');
+        }
     }
 
-    function updateNoteList(loader) {  
+    function updateNoteList(loader, updateOnFocus) {  
 
-        var exists = false, i, temp, key, noteList;
+        var exists = false, cloudNotes = false, temp, key, noteList;
         loader = loader || false;
+        updateOnFocus = updateOnFocus || false;
         noteList = $('#notes_tabs').html('');
 
-        if(!loader) {
+        if(!loader) { 
             $('#warningGradientOuterBarG').show();
-        }
-
-        for (key in localStorage){
-            if(Object.prototype.hasOwnProperty.call(localStorage,key)){
-                if (key.indexOf('myClipboard-') >= 0) {
-                    temp = getLocalObject(key).title || "untitled";
-                    addDropDown(key, temp);
-                    exists = key;
-                } else if (key.indexOf('myClipboard') >= 0) {     
-                    temp = migrateNote(key);
-                    exists = key; 
-                }
-            }
         }
         for (key in NoteThis.userData){
             if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
@@ -159,9 +151,29 @@ $(function () {
                     temp = NoteThis.userData[key].title || "untitled";
                     addDropDown(key, temp, 'cloud');
                     exists = key;
+                    cloudNotes = true;
                 }
             }
         }
+        for (key in localStorage){
+            if(Object.prototype.hasOwnProperty.call(localStorage,key)){
+                if (key.indexOf('myClipboard-') >= 0) {
+                    temp = getLocalObject(key).title || "untitled";
+                    if (! updateOnFocus && cloudNotes && temp === 'New Note' && getLocalObject(key).note ===''){
+                        console.log('blank note removed');
+                        localStorage.removeItem(key);
+                    }
+                    else {
+                        addDropDown(key, temp);
+                        exists = key;
+                    }
+                } else if (key.indexOf('myClipboard') >= 0) {     
+                    temp = migrateNote(key);
+                    exists = key; 
+                }
+            }
+        }
+        
 
         if(loader){
             $('#warningGradientOuterBarG').hide();
@@ -191,7 +203,6 @@ $(function () {
     */
     function loadNote(note_id) {
         var thisNote;
-
         $('#notes_tabs li.active').removeClass('active');
         $('#' + note_id).parent().addClass('active');
 
@@ -209,6 +220,10 @@ $(function () {
 
         NoteThis.activeNote = note_id;
         localStorage.setItem('activeNote', note_id);
+        //also set this in firebase if user is logged in
+        if (NoteThis.FireBaseUser) {
+            NoteThis.FireBaseUser.child('activeNote').set(note_id);
+        }
     }
 
     /*  
@@ -231,7 +246,7 @@ $(function () {
         current_note = getNextNote();
         //create new note
 
-        note_obj = {note: '', title: 'New Note '};
+        note_obj = {note: '', title: 'New Note'};
         setLocalObject(current_note, note_obj);
 
         //insert note in drop down with Text / title of Note
@@ -285,7 +300,6 @@ $(function () {
         var height, $window = $(window);
 
          $window.scroll(function(e) {
-            console.log('scrolling');
             height = $('.side-nav-wrapper').offset().top+$('#new_note').height();
              if($window.scrollTop() > height){
                  $(".side-nav").addClass('scrollfix');   
@@ -299,7 +313,6 @@ $(function () {
         var exists;
 
         updateList = updateList || false;
-
         //Load the NoteList, if any notes exist
         exists = updateNoteList(updateList);
 
@@ -307,7 +320,13 @@ $(function () {
         if (!exists) {
             createNote();
         } else {
-            NoteThis.activeNote = localStorage.getItem('activeNote');
+
+            if (NoteThis.FireBaseUser) {
+                NoteThis.activeNote = NoteThis.userData.activeNote;
+            }
+            else if (NoteThis.activeNote ===null) {
+                NoteThis.activeNote = localStorage.getItem('activeNote');
+            }
             if (NoteThis.activeNote !== null && noteExists(NoteThis.activeNote)) {
                 loadNote(NoteThis.activeNote);
             } else {
@@ -340,7 +359,6 @@ $(function () {
 
         $('.tip').tooltip();
 
-
         initialize(true);
         //clear local storage
 
@@ -359,8 +377,6 @@ $(function () {
             })
         );
         $('#logout_keep_data').tooltip();
-
-        initialize();
     }
 
     function export_note() {
@@ -463,9 +479,16 @@ $(function () {
         });
 
         //This is used to keep track of the notes on the server
-        NoteThis.FireBaseUser.on('value', function (snapshot) {
+        // NoteThis.FireBaseUser.on('value', function (snapshot) {
+        //     if(snapshot.val() !== null) {
+        //         NoteThis.userData = snapshot.val();
+        //     }
+        // });
+
+        //Testing use of child changed instead of value to reduce firebase bandwidth
+        NoteThis.FireBaseUser.on('child_changed', function(snapshot) {
             if(snapshot.val() !== null) {
-                NoteThis.userData = snapshot.val();
+                NoteThis.userData[snapshot.name()] = snapshot.val();
             }
         });
     }
@@ -523,13 +546,21 @@ $(function () {
 
         $('#logins').on("click", '#logout', function () {
             NoteThis.authClient.logout();
-            location.reload(); //Force a Reload to reapply loggedin/loggedout setup
+            window.location.reload(); //Force a Reload to reapply loggedin/loggedout setup
         });
 
-        /*Triggers an update on other tabs when noteme is open in multiple windows*/
+        /*Triggers an update on other tabs when notethis is open in multiple windows*/
         $(window).on("storage", function () {
-            updateNoteList();
+            updateNoteList(true, true);
         });
+
+        //Reload the current note on focus, if there is an active note
+        $(window).on("focus", function(){
+            if (NoteThis.activeNote !== null){
+                loadNote(NoteThis.activeNote)
+            }
+        });
+
 
         //Create A New Note
         $('#new_note').on('click', function () {
@@ -540,7 +571,6 @@ $(function () {
             e.preventDefault();
             loadNote($(this).attr('id'));
             if ($(window).width() < 768 && $('#sidebar_btn.collapsed').length <=0){
-                console.log('call');
                 $('.note-list').collapse('hide');
             }
         });
