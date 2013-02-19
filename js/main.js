@@ -443,6 +443,61 @@ $(function () {
         $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); 
     }
 
+    function searchNotes(query){
+        if (query.length >=2) {
+            var note_id, currentNote, results=[], haystack;
+            //first search online notes
+            for (note_id in NoteThis.userData){
+                if (note_id.indexOf('fireClip-') >= 0){
+                    currentNote=NoteThis.userData[note_id];
+                    haystack = currentNote.title.toLowerCase() + $(currentNote.note).text().toLowerCase();
+                    if ((haystack.indexOf(query.toLowerCase()) >=0)) {
+                        results.push({id: note_id, pos: haystack.indexOf(query.toLowerCase())});
+                    }
+                }
+            }
+            // console.log(results);
+            return results;
+        }
+    }
+    function formatSearch(list, query){
+        var currentNote, searchResult='', i, currentID;
+        if (list){
+            // $('#app-body').hide();
+            $('#search-body').slideDown();
+            $('#clear-search').attr('style','display: inline-block');
+            $('#query').html(query);
+            $('.note-list-search').html('');
+            for (i =0 ; i < list.length; i++) {
+                currentID = list[i].id
+                currentNote = NoteThis.userData[currentID];
+                searchResult = searchResult + '<div class = " span2 search-result" id = "search-' + currentID + '"><h4>' + currentNote.title + '</h4>';
+                searchResult = searchResult + printNotePreview(currentID, list[i].pos, query);
+                searchResult = searchResult + '</div>';
+            }
+            $('.note-list-search').append(searchResult || "<h5>There are no notes that match your search</h5>");
+
+
+        }
+        else {
+            $('#app-body').show();
+            $('#search-body').slideUp();
+            $('#clear-search').hide();
+
+        }
+    }
+    // return a snippet of a note based on a position and the note id.  Position is that of a matching string
+    function printNotePreview(note_id, position, query, length) {
+
+        var length = length || 70, result ='<p>';
+        if (position < length / 2 ){
+            result +=  $(NoteThis.userData[note_id].note).text().substring(0,length).replace(query, '<b>'+query+'</b>');
+        }
+        else {
+            result = $(NoteThis.userData[note_id].note).text().substring(position-length/2,position+length/2).replace(query, '<b>'+query+'</b>');
+        }
+        return result + '</p>';
+    }
     //This function definitely has a limited shelf-life.  Used to knock all the fireclip entries out of localstorage.
     // having them in there can cause some issues when loading notes.
     function wipeLocalFireClips() {
@@ -560,7 +615,11 @@ $(function () {
                 loadNote(NoteThis.activeNote)
             }
         });
-
+        $('#search').on('input', function(){
+            var results;
+            results = searchNotes($('#search').val());
+            formatSearch(results, $('#search').val());
+        });
 
         //Create A New Note
         $('#new_note').on('click', function () {
@@ -587,6 +646,19 @@ $(function () {
         $('#download').on('click', function () {
             export_note();
         });
+        $(document).on('click', '.search-result', function(){
+            console.log('event');
+            $('#search-body').hide();
+            $('#app-body').show();
+            $('#clear-search').hide();
+            loadNote($(this).attr('id').replace('search-',''));
+            $('#search').val('');
+        })
+        $('#clear-search').on('click', function(){
+            $('#search').val('');
+            $('#clear-search').hide();
+            $('#search-body').slideUp();
+        })
 
     /***********************************************************************************************/
     } else {
