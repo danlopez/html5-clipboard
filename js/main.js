@@ -445,14 +445,26 @@ $(function () {
 
     function searchNotes(query){
         if (query.length >=2) {
-            var note_id, currentNote, results=[], haystack;
+            var note_id, currentNote, results=[], haystack, key;
             //first search online notes
             for (note_id in NoteThis.userData){
                 if (note_id.indexOf('fireClip-') >= 0){
                     currentNote=NoteThis.userData[note_id];
-                    haystack = currentNote.title.toLowerCase() + $(currentNote.note).text().toLowerCase();
+                    haystack =currentNote.title.toLowerCase() + $('<div>'+currentNote.note+'</div>').text().toLowerCase();
                     if ((haystack.indexOf(query.toLowerCase()) >=0)) {
                         results.push({id: note_id, pos: haystack.indexOf(query.toLowerCase())});
+                    }
+                }
+            }
+
+            for (key in localStorage){
+                if(Object.prototype.hasOwnProperty.call(localStorage,key)){
+                    if (key.indexOf('myClipboard-') >= 0){
+                        currentNote=getLocalObject(key);
+                        haystack =currentNote.title.toLowerCase() + $('<div>'+currentNote.note+'</div>').text().toLowerCase();
+                        if ((haystack.indexOf(query.toLowerCase()) >=0)) {
+                            results.push({id: key, pos: haystack.indexOf(query.toLowerCase())});
+                        }
                     }
                 }
             }
@@ -470,7 +482,12 @@ $(function () {
             $('.note-list-search').html('');
             for (i =0 ; i < list.length; i++) {
                 currentID = list[i].id
-                currentNote = NoteThis.userData[currentID];
+                if (currentID.indexOf('fireClip-') >=0) {
+                    currentNote = NoteThis.userData[currentID];
+                }
+                else {
+                    currentNote = getLocalObject(currentID);    
+                }
                 searchResult = searchResult + '<div class = " span2 search-result" id = "search-' + currentID + '"><h4>' + currentNote.title + '</h4>';
                 searchResult = searchResult + printNotePreview(currentID, list[i].pos, query);
                 searchResult = searchResult + '</div>';
@@ -488,13 +505,21 @@ $(function () {
     }
     // return a snippet of a note based on a position and the note id.  Position is that of a matching string
     function printNotePreview(note_id, position, query, length) {
-
+        var currentNote;
         var length = length || 70, result ='<p>';
+
+        if (note_id.indexOf('fireClip-') >=0) {
+                    currentNote = NoteThis.userData[note_id];
+                }
+                else {
+                    currentNote = getLocalObject(note_id);    
+                }
+
         if (position < length / 2 ){
-            result +=  $(NoteThis.userData[note_id].note).text().substring(0,length).replace(query, '<b>'+query+'</b>');
+            result +=  $('<div>' + currentNote.note + '</div>').text().substring(0,length).replace(query, '<b>'+query+'</b>');
         }
         else {
-            result = $(NoteThis.userData[note_id].note).text().substring(position-length/2,position+length/2).replace(query, '<b>'+query+'</b>');
+            result = $('<div>' + currentNote.note + '</div>').text().substring(position-length/2,position+length/2).replace(query, '<b>'+query+'</b>');
         }
         return result + '</p>';
     }
@@ -648,7 +673,7 @@ $(function () {
         });
         $(document).on('click', '.search-result', function(){
             console.log('event');
-            $('#search-body').hide();
+            $('#search-body').slideUp();
             $('#app-body').show();
             $('#clear-search').hide();
             loadNote($(this).attr('id').replace('search-',''));
