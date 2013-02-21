@@ -113,16 +113,15 @@ $(function () {
 
     /* Generate a NEW Server-Side Note Object*/
     function pushNewNote(note_object) {
-        var newNote, newNoteNum = 1;
-        do{
-            newNote = "fireClip-" + newNoteNum;
-            newNoteNum = newNoteNum + 1;
-        } while(newNote in NoteThis.userData);
-
-        NoteThis.FireBaseUser.child(newNote).update(note_object); 
-        localStorage.removeItem(NoteThis.activeNote);    
-        $('#' + NoteThis.activeNote).attr('id', newNote).addClass("cloud");
-        NoteThis.activeNote = newNote;        
+            var newNote, newNoteNum = 1;
+            do{ //make sure that we're incrementing notes properly
+                newNote = "fireClip-" + newNoteNum;
+                newNoteNum = newNoteNum + 1;
+            } while(newNote in NoteThis.userData);
+            NoteThis.FireBaseUser.child(newNote).update(note_object); 
+            localStorage.removeItem(NoteThis.activeNote);    
+            $('#' + NoteThis.activeNote).attr('id', newNote).addClass("cloud");
+            NoteThis.activeNote = newNote;        
     }
 
     function addDropDown(id, title, myClass) {
@@ -301,7 +300,7 @@ $(function () {
 
          $window.scroll(function(e) {
             height = $('.side-nav-wrapper').offset().top+$('#new_note').height();
-             if($window.scrollTop() > height){
+             if($window.scrollTop() > height && $window.width() > 767){
                  $(".side-nav").addClass('scrollfix');   
              } else {
                  $(".side-nav").removeClass('scrollfix');
@@ -320,11 +319,12 @@ $(function () {
         if (!exists) {
             createNote();
         } else {
-
-            if (NoteThis.FireBaseUser) {
-                NoteThis.activeNote = NoteThis.userData.activeNote;
+            if (NoteThis.userData) {
+                if (NoteThis.userData.activeNote !== null) {
+                    NoteThis.activeNote = NoteThis.userData.activeNote;
+                }
             }
-            else if (NoteThis.activeNote ===null) {
+            if (NoteThis.activeNote ===null) {
                 NoteThis.activeNote = localStorage.getItem('activeNote');
             }
             if (NoteThis.activeNote !== null && noteExists(NoteThis.activeNote)) {
@@ -443,6 +443,112 @@ $(function () {
         $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); 
     }
 
+    function searchNotes(query){
+        if (query.length >=2) {
+            var note_id, currentNote, results=[], haystack, key;
+            //first search online notes
+            for (note_id in NoteThis.userData){
+                if (note_id.indexOf('fireClip-') >= 0){
+                    currentNote=NoteThis.userData[note_id];
+                    haystack =currentNote.title.toLowerCase() + $('<div>'+currentNote.note+'</div>').text().toLowerCase();
+                    if ((haystack.indexOf(query.toLowerCase()) >=0)) {
+                        results.push({id: note_id, pos: haystack.indexOf(query.toLowerCase())});
+                    }
+                }
+            }
+
+            for (key in localStorage){
+                if(Object.prototype.hasOwnProperty.call(localStorage,key)){
+                    if (key.indexOf('myClipboard-') >= 0){
+                        currentNote=getLocalObject(key);
+                        haystack =currentNote.title.toLowerCase() + $('<div>'+currentNote.note+'</div>').text().toLowerCase();
+                        if ((haystack.indexOf(query.toLowerCase()) >=0)) {
+                            results.push({id: key, pos: haystack.indexOf(query.toLowerCase())});
+                        }
+                    }
+                }
+            }
+        }
+        formatSearch(results, query);
+    }
+    function formatSearch(list, query){
+        var currentNote, searchResult='', i, currentID;
+        if (list){
+            // $('#app-body').hide();
+            $('#search-body').slideDown();
+            $('#clear-search').attr('style','display: inline-block');
+            $('#query').html(query);
+            $('.note-list-search').html('');
+            for (i =0 ; i < list.length; i++) {
+                currentID = list[i].id
+                if (currentID.indexOf('fireClip-') >=0) {
+                    currentNote = NoteThis.userData[currentID];
+                }
+                else {
+                    currentNote = getLocalObject(currentID);    
+                }
+                searchResult += printNotePreview(currentID, list[i].pos, query);
+
+            }
+            $('.note-list-search').append(searchResult || "<h5>There are no notes that match your search</h5>");
+
+
+        }
+        else {
+            $('#app-body').show();
+            $('#search-body').slideUp();
+            $('#clear-search').hide();
+
+        }
+    }
+    // return a snippet of a note based on a position and the note id.  Position is that of a matching string
+    function printNotePreview(note_id, position, query, length) {
+        var currentNote;
+        var length = length || 70, result;
+
+        //select proper note, local or online
+        if (note_id.indexOf('fireClip-') >=0) {
+            currentNote = NoteThis.userData[note_id];
+        }
+        else {
+            currentNote = getLocalObject(note_id);    
+        }
+        //start by formatting title
+        result = '<div class = " span2 search-result" id = "search-' + note_id + '"><h4>' + highlight(currentNote.title, query) + '</h4>';
+
+        //then add note preview
+        if (position < length / 2 ){
+            result +=  highlight($('<div>' + currentNote.note + '</div>').text().substring(0,length),query)+'...';
+        }
+        else {
+            result += '...'+highlight($('<div>' + currentNote.note + '</div>').text().substring(position-length/2,position+length/2), query)+'...';
+        }
+        //close out the div
+        return result + '</div>';
+    }
+
+
+    //SEARCH HELPERS, thanks to http://stackoverflow.com/questions/280793/case-insensitive-string-replacement-in-javascript
+    function preg_quote( str ) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: booeyOH
+    // +   improved by: Ates Goral (http://magnetiq.com)
+    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +   bugfixed by: Onno Marsman
+    // *     example 1: preg_quote("$40");
+    // *     returns 1: '\$40'
+    // *     example 2: preg_quote("*RRRING* Hello?");
+    // *     returns 2: '\*RRRING\* Hello\?'
+    // *     example 3: preg_quote("\\.+*?[^]$(){}=!<>|:");
+    // *     returns 3: '\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:'
+
+        return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
+    }
+    function highlight( data, search )
+    {
+        return data.replace( new RegExp( "(" + preg_quote( search ) + ")" , 'gi' ), "<span class='highlight' >$1</span>" );
+    }
+    //END SEARCH HELPERS
     //This function definitely has a limited shelf-life.  Used to knock all the fireclip entries out of localstorage.
     // having them in there can cause some issues when loading notes.
     function wipeLocalFireClips() {
@@ -478,19 +584,19 @@ $(function () {
             initialize(true);
         });
 
-        //This is used to keep track of the notes on the server
-        // NoteThis.FireBaseUser.on('value', function (snapshot) {
-        //     if(snapshot.val() !== null) {
-        //         NoteThis.userData = snapshot.val();
-        //     }
-        // });
-
-        //Testing use of child changed instead of value to reduce firebase bandwidth
-        NoteThis.FireBaseUser.on('child_changed', function(snapshot) {
+        // This is used to keep track of the notes on the server
+        NoteThis.FireBaseUser.on('value', function (snapshot) {
             if(snapshot.val() !== null) {
-                NoteThis.userData[snapshot.name()] = snapshot.val();
+                NoteThis.userData = snapshot.val();
             }
         });
+
+        //Testing use of child changed instead of value to reduce firebase bandwidth
+    //     NoteThis.FireBaseUser.on('child_changed', function(snapshot) {
+    //         if(snapshot.val() !== null) {
+    //             NoteThis.userData[snapshot.name()] = snapshot.val();
+    //         }
+    //     });
     }
 
     /***********************************************************************************************/
@@ -560,7 +666,10 @@ $(function () {
                 loadNote(NoteThis.activeNote)
             }
         });
-
+        $('#search').on('input', function(){
+            var results;
+            searchNotes($('#search').val());
+        });
 
         //Create A New Note
         $('#new_note').on('click', function () {
@@ -587,6 +696,18 @@ $(function () {
         $('#download').on('click', function () {
             export_note();
         });
+        $(document).on('click', '.search-result', function(){
+            $('#search-body').slideUp();
+            $('#app-body').show();
+            $('#clear-search').hide();
+            loadNote($(this).attr('id').replace('search-',''));
+            $('#search').val('');
+        })
+        $('#clear-search').on('click', function(){
+            $('#search').val('');
+            $('#clear-search').hide();
+            $('#search-body').slideUp();
+        })
 
     /***********************************************************************************************/
     } else {
