@@ -113,17 +113,15 @@ $(function () {
 
     /* Generate a NEW Server-Side Note Object*/
     function pushNewNote(note_object) {
-        console.log('pushing new note');
-        var newNote, newNoteNum = 1;
-        do{
-            newNote = "fireClip-" + newNoteNum;
-            newNoteNum = newNoteNum + 1;
-        } while(newNote in NoteThis.userData);
-
-        NoteThis.FireBaseUser.child(newNote).update(note_object); 
-        localStorage.removeItem(NoteThis.activeNote);    
-        $('#' + NoteThis.activeNote).attr('id', newNote).addClass("cloud");
-        NoteThis.activeNote = newNote;        
+            var newNote, newNoteNum = 1;
+            do{ //make sure that we're incrementing notes properly
+                newNote = "fireClip-" + newNoteNum;
+                newNoteNum = newNoteNum + 1;
+            } while(newNote in NoteThis.userData);
+            NoteThis.FireBaseUser.child(newNote).update(note_object); 
+            localStorage.removeItem(NoteThis.activeNote);    
+            $('#' + NoteThis.activeNote).attr('id', newNote).addClass("cloud");
+            NoteThis.activeNote = newNote;        
     }
 
     function addDropDown(id, title, myClass) {
@@ -321,11 +319,12 @@ $(function () {
         if (!exists) {
             createNote();
         } else {
-
-            if (NoteThis.FireBaseUser) {
-                NoteThis.activeNote = NoteThis.userData.activeNote;
+            if (NoteThis.userData) {
+                if (NoteThis.userData.activeNote !== null) {
+                    NoteThis.activeNote = NoteThis.userData.activeNote;
+                }
             }
-            else if (NoteThis.activeNote ===null) {
+            if (NoteThis.activeNote ===null) {
                 NoteThis.activeNote = localStorage.getItem('activeNote');
             }
             if (NoteThis.activeNote !== null && noteExists(NoteThis.activeNote)) {
@@ -519,10 +518,10 @@ $(function () {
 
         //then add note preview
         if (position < length / 2 ){
-            result +=  highlight($('<div>' + currentNote.note + '</div>').text().substring(0,length),query);
+            result +=  highlight($('<div>' + currentNote.note + '</div>').text().substring(0,length),query)+'...';
         }
         else {
-            result += highlight($('<div>' + currentNote.note + '</div>').text().substring(position-length/2,position+length/2), query);
+            result += '...'+highlight($('<div>' + currentNote.note + '</div>').text().substring(position-length/2,position+length/2), query)+'...';
         }
         //close out the div
         return result + '</div>';
@@ -585,19 +584,19 @@ $(function () {
             initialize(true);
         });
 
-        //This is used to keep track of the notes on the server
-        // NoteThis.FireBaseUser.on('value', function (snapshot) {
-        //     if(snapshot.val() !== null) {
-        //         NoteThis.userData = snapshot.val();
-        //     }
-        // });
-
-        //Testing use of child changed instead of value to reduce firebase bandwidth
-        NoteThis.FireBaseUser.on('child_changed', function(snapshot) {
+        // This is used to keep track of the notes on the server
+        NoteThis.FireBaseUser.on('value', function (snapshot) {
             if(snapshot.val() !== null) {
-                NoteThis.userData[snapshot.name()] = snapshot.val();
+                NoteThis.userData = snapshot.val();
             }
         });
+
+        //Testing use of child changed instead of value to reduce firebase bandwidth
+    //     NoteThis.FireBaseUser.on('child_changed', function(snapshot) {
+    //         if(snapshot.val() !== null) {
+    //             NoteThis.userData[snapshot.name()] = snapshot.val();
+    //         }
+    //     });
     }
 
     /***********************************************************************************************/
