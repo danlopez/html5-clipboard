@@ -11,7 +11,12 @@
     <div class="navbar navbar-static-top">
         <div class="navbar-inner">
             <div class="container">
-                <h1 class="brand" style="margin: 0px; padding: 0px;">notethis</h1>
+                <h1 class="brand" style="margin: 0px; padding: 0px;"><img src="/img/notethis-logo.png"/></h1>
+                <ul class="nav">
+                    <li><input type="text" class="input-medium search-query hidden-phone" id="search" placeholder="Search...">
+                    <i id = "clear-search" class="icon-remove-sign"></i></li>
+
+                </ul>
                 <ul class="nav pull-right">
                     <li class="dropdown" id="logins">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -25,8 +30,15 @@
             </div>
         </div>
     </div>
+    <div class="container-fluid" id="search-body">
+        <div class="span12">
+            <h3>Showing results for "<span id ="query"></span>":</h3>
 
-    <div class="container-fluid">
+            <div class="note-list-search">
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid" id="app-body">
         <div class="row-fluid">
           <p>notethis is a free clipboard. Just begin typing. <span class="hidden-phone">It'll be here when you get back</span></p>
         </div>
@@ -35,6 +47,7 @@
                     <button class="btn btn-primary " id="new_note">New Note + </button>
                     <span class="navbar">
                         <button id="sidebar_btn" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+
                             <span class="icon-bar"></span>
                             <span class="icon-bar"></span>
                             <span class="icon-bar"></span>
@@ -93,6 +106,7 @@
             </div><!-- end span9-->
         </div>
     </div>
+
 
     <!-- Modal -->
     <div id="storageExceeded" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">

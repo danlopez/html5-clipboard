@@ -1093,3 +1093,34 @@ body .redactor_toolbar li a.redactor_btn_alignment{background-position:-625px}
         height: auto !important;
     }
 }
+
+#search {
+    margin-left: 20px;
+    margin-top: 5px;
+}
+#clear-search {
+    margin: 5px 0 0 -23px;
+    display: none;
+    cursor: pointer;
+}
+#search-body {
+    display: none;
+}
+.search-result {
+    word-wrap: break-word;
+    border: 1px solid #EEE;
+    border-radius: 5px;
+    padding: 5px;
+    margin-bottom: 10px;
+    min-height: 151px;
+}
+.search-result:hover {
+    background: #EEE;
+    cursor: pointer;
+}
+.brand {
+    width: 103px;
+}
+.highlight {
+    background: #85D8A9;
+}
