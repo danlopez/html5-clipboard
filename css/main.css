@@ -1121,3 +1121,6 @@ body .redactor_toolbar li a.redactor_btn_alignment{background-position:-625px}
 .brand {
     width: 103px;
 }
+.highlight {
+    background: #85D8A9;
+}

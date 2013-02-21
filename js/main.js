@@ -113,6 +113,7 @@ $(function () {
 
     /* Generate a NEW Server-Side Note Object*/
     function pushNewNote(note_object) {
+        console.log('pushing new note');
         var newNote, newNoteNum = 1;
         do{
             newNote = "fireClip-" + newNoteNum;
@@ -302,7 +303,6 @@ $(function () {
          $window.scroll(function(e) {
             height = $('.side-nav-wrapper').offset().top+$('#new_note').height();
              if($window.scrollTop() > height && $window.width() > 767){
-                console.log('fix');
                  $(".side-nav").addClass('scrollfix');   
              } else {
                  $(".side-nav").removeClass('scrollfix');
@@ -469,9 +469,8 @@ $(function () {
                     }
                 }
             }
-            // console.log(results);
-            return results;
         }
+        formatSearch(results, query);
     }
     function formatSearch(list, query){
         var currentNote, searchResult='', i, currentID;
@@ -489,9 +488,8 @@ $(function () {
                 else {
                     currentNote = getLocalObject(currentID);    
                 }
-                searchResult = searchResult + '<div class = " span2 search-result" id = "search-' + currentID + '"><h4>' + currentNote.title + '</h4>';
-                searchResult = searchResult + printNotePreview(currentID, list[i].pos, query);
-                searchResult = searchResult + '</div>';
+                searchResult += printNotePreview(currentID, list[i].pos, query);
+
             }
             $('.note-list-search').append(searchResult || "<h5>There are no notes that match your search</h5>");
 
@@ -507,23 +505,51 @@ $(function () {
     // return a snippet of a note based on a position and the note id.  Position is that of a matching string
     function printNotePreview(note_id, position, query, length) {
         var currentNote;
-        var length = length || 70, result ='<p>';
+        var length = length || 70, result;
 
+        //select proper note, local or online
         if (note_id.indexOf('fireClip-') >=0) {
-                    currentNote = NoteThis.userData[note_id];
-                }
-                else {
-                    currentNote = getLocalObject(note_id);    
-                }
-
-        if (position < length / 2 ){
-            result +=  $('<div>' + currentNote.note + '</div>').text().substring(0,length).replace(query, '<b>'+query+'</b>');
+            currentNote = NoteThis.userData[note_id];
         }
         else {
-            result = $('<div>' + currentNote.note + '</div>').text().substring(position-length/2,position+length/2).replace(query, '<b>'+query+'</b>');
+            currentNote = getLocalObject(note_id);    
         }
-        return result + '</p>';
+        //start by formatting title
+        result = '<div class = " span2 search-result" id = "search-' + note_id + '"><h4>' + highlight(currentNote.title, query) + '</h4>';
+
+        //then add note preview
+        if (position < length / 2 ){
+            result +=  highlight($('<div>' + currentNote.note + '</div>').text().substring(0,length),query);
+        }
+        else {
+            result += highlight($('<div>' + currentNote.note + '</div>').text().substring(position-length/2,position+length/2), query);
+        }
+        //close out the div
+        return result + '</div>';
     }
+
+
+    //SEARCH HELPERS, thanks to http://stackoverflow.com/questions/280793/case-insensitive-string-replacement-in-javascript
+    function preg_quote( str ) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: booeyOH
+    // +   improved by: Ates Goral (http://magnetiq.com)
+    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // +   bugfixed by: Onno Marsman
+    // *     example 1: preg_quote("$40");
+    // *     returns 1: '\$40'
+    // *     example 2: preg_quote("*RRRING* Hello?");
+    // *     returns 2: '\*RRRING\* Hello\?'
+    // *     example 3: preg_quote("\\.+*?[^]$(){}=!<>|:");
+    // *     returns 3: '\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:'
+
+        return (str+'').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, "\\$1");
+    }
+    function highlight( data, search )
+    {
+        return data.replace( new RegExp( "(" + preg_quote( search ) + ")" , 'gi' ), "<span class='highlight' >$1</span>" );
+    }
+    //END SEARCH HELPERS
     //This function definitely has a limited shelf-life.  Used to knock all the fireclip entries out of localstorage.
     // having them in there can cause some issues when loading notes.
     function wipeLocalFireClips() {
@@ -643,8 +669,7 @@ $(function () {
         });
         $('#search').on('input', function(){
             var results;
-            results = searchNotes($('#search').val());
-            formatSearch(results, $('#search').val());
+            searchNotes($('#search').val());
         });
 
         //Create A New Note
@@ -673,7 +698,6 @@ $(function () {
             export_note();
         });
         $(document).on('click', '.search-result', function(){
-            console.log('event');
             $('#search-body').slideUp();
             $('#app-body').show();
             $('#clear-search').hide();
