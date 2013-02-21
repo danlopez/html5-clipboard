@@ -301,7 +301,8 @@ $(function () {
 
          $window.scroll(function(e) {
             height = $('.side-nav-wrapper').offset().top+$('#new_note').height();
-             if($window.scrollTop() > height && $window.width > 767){
+             if($window.scrollTop() > height && $window.width() > 767){
+                console.log('fix');
                  $(".side-nav").addClass('scrollfix');   
              } else {
                  $(".side-nav").removeClass('scrollfix');
