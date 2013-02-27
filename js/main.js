@@ -87,7 +87,7 @@ $(function () {
 
     function delayedSaveOnline(){
         var noteContent, note_obj;
-        noteContent = Base64.encode(NoteThis.editor.getCode());
+        noteContent = NoteThis.editor.getCode();
         note_obj = {note: noteContent, title: $('#title').val(), updated: Date(), encrypt: true};  
         if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
             pushNewNote(note_obj);
@@ -232,11 +232,6 @@ $(function () {
         thisNote.title = thisNote.title || "untitled";
         thisNote.encrypt = thisNote.encrypt || false;
        
-        //If the note is registered as encrypted, decode it
-        thisNote.note = (thisNote.encrypt)?Base64.decode(thisNote.note):thisNote.note; 
-        if(thisNote.encrypt){
-            noteContent = Base64.decode(thisNote.note);
-        }
         NoteThis.editor.setCode(thisNote.note);
         $('#title').val(thisNote.title);
 
@@ -456,12 +451,16 @@ $(function () {
 
     function searchNotes(query){
         if (query.length >=2) {
-            var note_id, currentNote, results=[], haystack, key;
+            var note_id, currentNote, results=[], haystack, key, tmpNote;
             //first search online notes
             for (note_id in NoteThis.userData){
                 if (note_id.indexOf('fireClip-') >= 0){
                     currentNote=NoteThis.userData[note_id];
+
                     haystack =currentNote.title.toLowerCase() + $('<div>'+currentNote.note+'</div>').text().toLowerCase();
+                    console.log("HAYSTACK==>");
+                    console.log(haystack);
+                    console.log("<===END HAYSTACK");
                     if ((haystack.indexOf(query.toLowerCase()) >=0)) {
                         results.push({id: note_id, pos: haystack.indexOf(query.toLowerCase())});
                     }
@@ -589,6 +588,15 @@ $(function () {
             //             setLocalObject(key, note_obj)
             //         }
                 NoteThis.userData = snapshot.val();
+
+                for (key in NoteThis.userData){
+                    if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
+                        if (key.indexOf('fireClip-') >= 0) {
+                            NoteThis.userData[key].encrypt = NoteThis.userData[key].encrypt || false;
+                            NoteThis.userData[key].note = (NoteThis.userData[key].encrypt)?Base64.decode(NoteThis.userData[key].note):NoteThis.userData[key].note;
+                        }
+                    }
+                }
             }   
                 
             // }
@@ -599,7 +607,9 @@ $(function () {
         NoteThis.FireBaseUser.on('value', function (snapshot) {
             if(snapshot.val() !== null) {
                 NoteThis.userData = snapshot.val();
+
             }
+
         });
 
         //Testing use of child changed instead of value to reduce firebase bandwidth
