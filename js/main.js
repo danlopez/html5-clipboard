@@ -87,7 +87,7 @@ $(function () {
 
     function delayedSaveOnline(){
         var noteContent, note_obj;
-        noteContent = NoteThis.editor.getCode();
+        noteContent = Base64.encode(NoteThis.editor.getCode());
         note_obj = {note: noteContent, title: $('#title').val(), updated: Date(), encrypt: true};  
         if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
             pushNewNote(note_obj);
@@ -582,42 +582,40 @@ $(function () {
         NoteThis.FireBaseUser = new Firebase('https://definedclarity.firebaseio.com/users/' + user_id);
         NoteThis.FireBaseUser.once('value', function (snapshot) {
             if (snapshot.val() !== null) {
-            //     for (key in snapshot.val()) {
-            //         if (snapshot.val().hasOwnProperty(key)) {
-            //             note_obj = {note: snapshot.val()[key].note, title: snapshot.val()[key].title};
-            //             setLocalObject(key, note_obj)
-            //         }
-                NoteThis.userData = snapshot.val();
-
-                for (key in NoteThis.userData){
-                    if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
-                        if (key.indexOf('fireClip-') >= 0) {
-                            NoteThis.userData[key].encrypt = NoteThis.userData[key].encrypt || false;
-                            NoteThis.userData[key].note = (NoteThis.userData[key].encrypt)?Base64.decode(NoteThis.userData[key].note):NoteThis.userData[key].note;
-                        }
+               for (key in snapshot.val()) {
+                   if (snapshot.val().hasOwnProperty(key)) {
+                       note_obj = {note: snapshot.val()[key].note, title: snapshot.val()[key].title};
+                       setLocalObject(key, note_obj)
+                   }
+                   NoteThis.userData = snapshot.val();
+               }
+               for (key in NoteThis.userData){
+                if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
+                    if (key.indexOf('fireClip-') >= 0) {
+                        NoteThis.userData[key].encrypt = NoteThis.userData[key].encrypt || false;
+                        NoteThis.userData[key].note = (NoteThis.userData[key].encrypt)?Base64.decode(NoteThis.userData[key].note):NoteThis.userData[key].note;
                     }
                 }
-            }   
-                
-            // }
+            }          
+        }
+
             initialize(true);
+
+                 // This is used to keep track of the notes on the server
+            NoteThis.FireBaseUser.on('value', function (snapshot) {
+                if(snapshot.val() !== null) {
+                    NoteThis.userData = snapshot.val();
+                    for (key in NoteThis.userData){
+                        if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
+                            if (key.indexOf('fireClip-') >= 0) {
+                                NoteThis.userData[key].encrypt = NoteThis.userData[key].encrypt || false;
+                                NoteThis.userData[key].note = (NoteThis.userData[key].encrypt)?Base64.decode(NoteThis.userData[key].note):NoteThis.userData[key].note;
+                            }
+                        }
+                    }      
+                }
+            });
         });
-
-        // This is used to keep track of the notes on the server
-        NoteThis.FireBaseUser.on('value', function (snapshot) {
-            if(snapshot.val() !== null) {
-                NoteThis.userData = snapshot.val();
-
-            }
-
-        });
-
-        //Testing use of child changed instead of value to reduce firebase bandwidth
-    //     NoteThis.FireBaseUser.on('child_changed', function(snapshot) {
-    //         if(snapshot.val() !== null) {
-    //             NoteThis.userData[snapshot.name()] = snapshot.val();
-    //         }
-    //     });
     }
 
     /***********************************************************************************************/
