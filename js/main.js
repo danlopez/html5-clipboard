@@ -436,25 +436,13 @@ $(function () {
         }
 
         $parent = $('#' + note_id).parent();
-        for (key in NoteThis.userData){
-            if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
-                if (key.indexOf('fireClip-') >= 0) {
-                    loadNote(key);
-                    $parent.fadeOut(300, function() { $(this).remove(); });
-                    return;
-                }
-            }
+
+        //if other notes exist, load one of them after we delete the current note
+
+        if ($('#notes_tabs li').length >1){
+            $parent.fadeOut(300, function() { $(this).remove(); loadNote($('#notes_tabs li:first a').attr('id')); }); 
+            return;
         }
-        for (key in localStorage){
-            if(Object.prototype.hasOwnProperty.call(localStorage,key)){
-                if (key.indexOf('myClipboard-') >= 0) {
-                    loadNote(key);
-                    $parent.fadeOut(300, function() { $(this).remove(); });
-                    return;
-                }
-            }
-        }
-        $parent = $('#' + note_id).parent();
         $parent.fadeOut(300, function() { $(this).remove(); createNote(); }); 
     }
 
