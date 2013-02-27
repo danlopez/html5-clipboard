@@ -86,7 +86,7 @@ $(function () {
     }
 
     function delayedSaveOnline(){
-        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val()};  
+        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val(), updated: Date()};  
         if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
             pushNewNote(note_obj);
         } else {   
@@ -96,7 +96,7 @@ $(function () {
     }
 
     function delayedSaveOffLine(){
-        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val()};
+        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val(), updated: Date()};
         if(NoteThis.activeNote.indexOf('fireClip-') >= 0){
             pushNoteLocal(note_obj);
             setLocalObject(NoteThis.activeNote, note_obj); //REMOVE THIS ONCE pushNOTE LOCAL IS WRITTEN
@@ -124,10 +124,16 @@ $(function () {
             NoteThis.activeNote = newNote;        
     }
 
-    function addDropDown(id, title, myClass) {
+    function addDropDown(id, title, myClass, newNote) {
         var thisClass = (myClass || '');
+        var newNote = (newNote || false);
         thisClass = thisClass + " truncate switch_note";
-        $('#notes_tabs').append('<li><a title="' + title + '" href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
+        if (newNote){
+            $('#notes_tabs').prepend('<li><a title="' + title + '" href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
+        }
+        else {
+            $('#notes_tabs').append('<li><a title="' + title + '" href="#" class="' + thisClass + '" id="' + id + '">' + title + '</a></li>');
+        }
         //add active class if it should have it
         if (NoteThis.activeNote == id) {
             $('#'+id).parent().addClass('active');
@@ -136,7 +142,7 @@ $(function () {
 
     function updateNoteList(loader, updateOnFocus) {  
 
-        var exists = false, cloudNotes = false, temp, key, noteList;
+        var exists = false, cloudNotes = false, temp, key, noteList, allNotes=[];
         loader = loader || false;
         updateOnFocus = updateOnFocus || false;
         noteList = $('#notes_tabs').html('');
@@ -148,9 +154,9 @@ $(function () {
             if(Object.prototype.hasOwnProperty.call(NoteThis.userData,key)){
                 if (key.indexOf('fireClip-') >= 0) {
                     temp = NoteThis.userData[key].title || "untitled";
-                    addDropDown(key, temp, 'cloud');
                     exists = key;
                     cloudNotes = true;
+                    allNotes.push({key:key, temp:temp, noteclass:'cloud', updated: NoteThis.userData[key].updated || "Fri Feb 22 2012 07:34:24 GMT-0500 (EST)"});
                 }
             }
         }
@@ -163,7 +169,7 @@ $(function () {
                         localStorage.removeItem(key);
                     }
                     else {
-                        addDropDown(key, temp);
+                        allNotes.push({key:key, temp:temp, noteclass:'local', updated: getLocalObject(key).updated || "Fri Feb 22 2012 07:34:24 GMT-0500 (EST)"});
                         exists = key;
                     }
                 } else if (key.indexOf('myClipboard') >= 0) {     
@@ -172,7 +178,16 @@ $(function () {
                 }
             }
         }
-        
+        //sort notes, by date
+        allNotes = allNotes.sort(function(a, b) {
+            a = new Date(a.updated);
+            b = new Date(b.updated);
+            return a>b ? -1 : a<b ? 1 : 0;
+        });
+        //now print a drop down for each
+        for (var i = 0; i < allNotes.length; i ++){
+            addDropDown(allNotes[i].key, allNotes[i].temp, allNotes[i].noteclass);
+        }        
 
         if(loader){
             $('#warningGradientOuterBarG').hide();
@@ -249,7 +264,7 @@ $(function () {
         setLocalObject(current_note, note_obj);
 
         //insert note in drop down with Text / title of Note
-        addDropDown(current_note, note_obj.title);
+        addDropDown(current_note, note_obj.title, '', true);
         loadNote(current_note);
     }
 
