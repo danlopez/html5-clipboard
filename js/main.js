@@ -86,7 +86,9 @@ $(function () {
     }
 
     function delayedSaveOnline(){
-        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val(), updated: Date()};  
+        var noteContent, note_obj;
+        noteContent = Base64.encode(NoteThis.editor.getCode());
+        note_obj = {note: noteContent, title: $('#title').val(), updated: Date(), encrypt: true};  
         if(NoteThis.activeNote.indexOf('myClipboard-') >= 0){
             pushNewNote(note_obj);
         } else {   
@@ -96,7 +98,7 @@ $(function () {
     }
 
     function delayedSaveOffLine(){
-        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val(), updated: Date()};
+        var note_obj = {note: NoteThis.editor.getCode(), title: $('#title').val(), updated: Date(), encrypt: false};
         if(NoteThis.activeNote.indexOf('fireClip-') >= 0){
             pushNoteLocal(note_obj);
             setLocalObject(NoteThis.activeNote, note_obj); //REMOVE THIS ONCE pushNOTE LOCAL IS WRITTEN
@@ -216,19 +218,25 @@ $(function () {
     **  Switches Active Note, Loads WYSIWYG from LocalStorage                  
     */
     function loadNote(note_id) {
-        var thisNote;
+        var thisNote, noteContent;
         $('#notes_tabs li.active').removeClass('active');
         $('#' + note_id).parent().addClass('active');
 
         if (note_id.indexOf('fireClip-') >= 0) {
-            thisNote = {note: NoteThis.userData[note_id].note, title: NoteThis.userData[note_id].title};
+            thisNote = {note: NoteThis.userData[note_id].note, title: NoteThis.userData[note_id].title, encrypt: NoteThis.userData[note_id].encrypt};
         } else {
             thisNote = getLocalObject(note_id);
         }
         
         thisNote.note = thisNote.note || "";
         thisNote.title = thisNote.title || "untitled";
-        
+        thisNote.encrypt = thisNote.encrypt || false;
+       
+        //If the note is registered as encrypted, decode it
+        thisNote.note = (thisNote.encrypt)?Base64.decode(thisNote.note):thisNote.note; 
+        if(thisNote.encrypt){
+            noteContent = Base64.decode(thisNote.note);
+        }
         NoteThis.editor.setCode(thisNote.note);
         $('#title').val(thisNote.title);
 
